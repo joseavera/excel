@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Avanzado — Combinación de Correspondencia | IEDEP</title>
+  <link rel="stylesheet" href="base.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="page-wrapper">
+
+    <header class="site-header">
+      <div class="logo-wrap">
+        <img src="Imagen1.png" alt="Logo Principal IEDEP">
+      </div>
+      <div class="header-text">
+        <span class="inst-name">Instituto de Educación Digital del Estado de Puebla</span>
+        <span class="doc-title">Dirección de Educación Superior · Material de Estudio</span>
+      </div>
+    </header>
+
+    <section class="class-hero">
+      <span class="class-label">Asignatura</span>
+      <h1>Excel Avanzado</h1>
+      <span class="class-subtitle">Automatización e Integración de Herramientas Ofimáticas</span>
+      
+      <div class="meta-row">
+        <div class="meta-item">Unidad de estudio <span>Unidad 3: Interoperabilidad</span></div>
+        <div class="meta-item">Tema <span>Combinación de Correspondencia (Word + Excel)</span></div>
+      </div>
+    </section>
+
+    <main class="section">
+      <span class="section-label">01. Contextualización</span>
+      <h2 class="section-title">¿Qué es la Combinación de Correspondencia?</h2>
+      
+      <p>La <strong>combinación de correspondencia</strong> es una técnica de automatización que permite conectar una base de datos estructurada (generalmente un libro de <strong>Microsoft Excel</strong>) con un documento matriz (en <strong>Microsoft Word</strong>). El objetivo principal es generar múltiples documentos personalizados de manera masiva —como cartas, constancias, facturas o correos electrónicos— optimizando tiempo y eliminando errores de transcripción manual.</p>
+
+      <div class="concept-box">
+        <span class="concept-title">Concepto Clave: El Binomio de Eficiencia</span>
+        <p>En este flujo de trabajo, cada herramienta toma el rol para el que fue diseñada óptimamente:</p>
+        <ul>
+          <li><strong>Excel actúa como el Motor de Datos:</strong> Almacena la información de forma tabular (filas como registros, columnas como campos).</li>
+          <li><strong>Word actúa como la Capa de Presentación:</strong> Define el diseño visual, el texto estático y los contenedores dinámicos donde se inyectarán los datos.</li>
+        </ul>
+      </div>
+
+      <div class="callout note">
+        <p><strong>Nota importante:</strong> Para que la vinculación sea exitosa, la primera fila de la hoja de cálculo en Excel <em>siempre</em> debe contener los nombres de las columnas (encabezados) sin celdas combinadas ni filas en blanco encima de ellos.</p>
+      </div>
+    </main>
+
+    <section class="section">
+      <span class="section-label">02. Objetivos de Aprendizaje</span>
+      <h2 class="section-title">Competencias a Desarroller</h2>
+      
+      <div class="competency-card">
+        <div class="comp-num">01</div>
+        <div class="comp-text"><strong>Estructurar</strong> bases de datos en Excel aplicando reglas de normalización para asegurar la lectura limpia de campos desde aplicaciones externas.</div>
+      </div>
+
+      <div class="competency-card">
+        <div class="comp-num">02</div>
+        <div class="comp-text"><strong>Vincular e inyectar</strong> marcadores de posición (campos de combinación) dinámicos en procesadores de texto institucionales.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <span class="section-label">03. Aplicación Práctica</span>
+      <h2 class="section-title">Ejemplo Paso a Paso: Emisión de Constancias Digitales</h2>
+      <p>Imagine que la dirección del IEDEP necesita generar 150 constancias de terminación de curso personalizadas. Hacerlo manualmente tomaría horas. A continuación, se detalla el procedimiento técnico automatizado:</p>
+
+      <div class="example-block">
+        <div class="example-header">Caso de Uso: Automatización de Constancias Académicas</div>
+        <div class="example-body">
+          
+          <div class="example-statement">
+            <strong>Estructura de la Fórmula/Lógica de Datos:</strong><br>
+            La correspondencia se procesa bajo el principio de mapeo de registros lineales:
+            <code class="formula">Documento_Final(n) = Plantilla_Word + Fila_Excel(n)</code>
+            <span class="formula-note">Donde "n" representa el número de fila o registro del alumno en la base de datos.</span>
+          </div>
+
+          <ul class="step-list">
+            <li>
+              <div class="step-n">1</div>
+              <div class="step-content">
+                <strong>Preparar el origen de datos (Excel):</strong> Diseñe una tabla con las columnas: <code>Matricula</code>, <code>Nombre_Alumno</code>, <code>Carrera</code> y <code>Promedio</code>. Guarde y cierre el archivo para liberar los permisos de lectura.
+              </div>
+            </li>
+            <li>
+              <div class="step-n">2</div>
+              <div class="step-content">
+                <strong>Redactar la plantilla (Word):</strong> Abra el documento y redacte el texto institucional dejando los espacios correspondientes para las variables del estudiante.
+              </div>
+            </li>
+            <li>
+              <div class="step-n">3</div>
+              <div class="step-content">
+                <strong>Conectar los archivos:</strong> En Word, diríjase a la pestaña <em>Correspondencia</em> &gt; <em>Seleccionar destinatarios</em> &gt; <em>Usar una lista existente...</em> y seleccione su archivo de Excel.
+              </div>
+            </li>
+            <li>
+              <div class="step-n">4</div>
+              <div class="step-content">
+                <strong>Insertar campos dinámicos:</strong> Posicione el cursor donde deba ir el nombre del alumno, haga clic en <em>Insertar campo combinado</em> y elija <code>Nombre_Alumno</code>. Repita para los demás datos.
+              </div>
+            </li>
+            <li>
+              <div class="step-n">5</div>
+              <div class="step-content">
+                <strong>Finalizar y Combinar:</strong> Haga clic en <em>Finalizar y combinar</em>. Seleccione "Editar documentos individuales" para generar un único archivo con todas las constancias segmentadas por saltos de página automáticamente.
+              </div>
+            </li>
+          </ul>
+
+          <div class="result-line">
+            Resultado esperado: Generación masiva de N documentos listos para impresión o conversión a PDF en un solo clic.
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <span class="section-label">04. Evaluación</span>
+      <h2 class="section-title">Desafío Práctico Autónoma</h2>
+      <p>Para consolidar el dominio de esta integración avanzada, deberá resolver el siguiente escenario del entorno laboral real:</p>
+
+      <div class="card">
+        <span class="card-title">Reto Académico: Sistema de Notificación de Becas</span>
+        <p>Usted ha sido asignado al área de Control Escolar y debe notificar formalmente a los alumnos de excelencia que han obtenido un porcentaje de beca económica para el siguiente periodo cuatrimestral.</p>
+        
+        <div class="grid-2">
+          <div>
+            <h4>Fase 1: La Base de Datos (Excel)</h4>
+            <p class="text-sm">Cree un libro de Excel con al menos <strong>5 registros</strong> ficticios utilizando los siguientes campos exactos:</p>
+            <ul>
+              <li><code class="text-mono">ID_Pago</code></li>
+              <li><code class="text-mono">Tutor_Nombre</code></li>
+              <li><code class="text-mono">Estudiante</code></li>
+              <li><code class="text-mono">Porcentaje_Beca</code> (Formato de porcentaje)</li>
+              <li><code class="text-mono">Campus</code></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Fase 2: La Carta Matriz (Word)</h4>
+            <p class="text-sm">Diseñe una carta institucional formal del IEDEP dirigida al <strong>Tutor</strong> notificando que su hijo(a) (campo <strong>Estudiante</strong>) del campus correspondiente, ha sido acreedor al beneficio.</p>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top: 1rem; margin-bottom: 0;">
+          <p><strong>Entregable:</strong> Deberá empaquetar el archivo de Excel origen, la plantilla de Word vinculada y el PDF final resultante con las 5 cartas individuales combinadas en la plataforma LMS institucional.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-rule">
+
+    <footer class="site-footer">
+      <div>
+        Asignatura: <strong>Excel Avanzado</strong> · Herramientas de Integración
+      </div>
+      <div>
+        <img src="Imagen2.png" alt="Logo Secundario IEDEP" style="height: 30px; width: auto; vertical-align: middle; margin-left: 10px;">
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
