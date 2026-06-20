@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación — Excel Avanzado | IEDEP</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Estilos exclusivos de la lógica de evaluación, NO de la identidad visual.
+     La identidad visual completa vive en base.css y no se modifica aquí. */
+
+  .locked-block {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    padding: 1.5rem 1.6rem;
+    margin: 1.25rem 0;
+  }
+
+  .locked-block.is-locked .quiz-content { display: none; }
+
+  .unlock-row {
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .unlock-row input[type="text"] {
+    font-family: var(--font-mono);
+    font-size: .95rem;
+    padding: .55rem .8rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    color: var(--ink);
+    min-width: 220px;
+  }
+
+  .unlock-row button {
+    font-family: var(--font-ui);
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--guinda);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .6rem 1.1rem;
+    cursor: pointer;
+  }
+
+  .unlock-row button:hover { background: var(--guinda-dark); }
+
+  .unlock-msg {
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    color: var(--ink-secondary);
+  }
+
+  .unlock-msg.error { color: var(--guinda-rule); font-weight: 600; }
+
+  .quiz-question {
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+    margin-top: 1.1rem;
+  }
+
+  .quiz-question:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+  .quiz-question p.q-text {
+    font-weight: 600;
+    margin-bottom: .7rem;
+  }
+
+  .quiz-options { display: flex; flex-direction: column; gap: .5rem; }
+
+  .quiz-options label {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .95rem;
+    padding: .5rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    cursor: pointer;
+  }
+
+  .quiz-options input[type="radio"] { accent-color: var(--guinda); }
+
+  .quiz-progress {
+    font-family: var(--font-ui);
+    font-size: .78rem;
+    color: var(--ink-muted);
+    text-align: right;
+    margin-top: 1.5rem;
+  }
+
+  .submit-row { margin-top: 1.5rem; text-align: right; }
+
+  .submit-row button {
+    font-family: var(--font-ui);
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--guinda);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .7rem 1.4rem;
+    cursor: pointer;
+  }
+
+  .submit-row button:disabled {
+    background: var(--border-strong);
+    cursor: not-allowed;
+  }
+
+  /* Aviso de integridad académica */
+  .integrity-banner {
+    background: var(--guinda-light);
+    border: 1px solid #D8A8BA;
+    border-radius: var(--radius-md);
+    padding: .9rem 1.2rem;
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    color: var(--guinda-dark);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Panel de resultados */
+  #results-panel { display: none; position: relative; overflow: hidden; }
+
+  .watermark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .watermark span {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    font-weight: 600;
+    color: var(--guinda);
+    opacity: .07;
+    transform: rotate(-28deg);
+    white-space: nowrap;
+  }
+
+  .results-inner { position: relative; z-index: 1; }
+
+  .score-display {
+    text-align: center;
+    padding: 1.5rem 0 .5rem;
+  }
+
+  .score-number {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--guinda);
+    line-height: 1;
+  }
+
+  .score-label {
+    font-family: var(--font-ui);
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ink-muted);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
+
+  .stat-box {
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem .5rem;
+    background: var(--off-white);
+  }
+
+  .stat-box .stat-num { font-size: 1.8rem; font-weight: 700; color: var(--ink); }
+  .stat-box.aciertos .stat-num { color: #2E7D32; }
+  .stat-box.errores .stat-num { color: var(--guinda-rule); }
+  .stat-box.infracciones .stat-num { color: #B45309; }
+  .stat-box .stat-text {
+    font-family: var(--font-ui);
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ink-muted);
+    margin-top: .2rem;
+  }
+
+  .infraction-log {
+    font-family: var(--font-ui);
+    font-size: .8rem;
+    color: var(--ink-secondary);
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: .8rem 1rem;
+    margin-top: .5rem;
+  }
+
+  .alumno-form {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .alumno-form input[type="text"] {
+    font-family: var(--font-ui);
+    font-size: .92rem;
+    padding: .6rem .85rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .alumno-form button {
+    font-family: var(--font-ui);
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--guinda);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .6rem 1.2rem;
+    cursor: pointer;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo-wrap">
+    <img src="imagen1.png" alt="Logo principal IEDEP">
+  </div>
+  <div class="header-text">
+    <span class="inst-name">Instituto de Educación Digital del Estado de Puebla</span>
+    <span class="doc-title">Evaluación — Excel Avanzado · Licenciatura en Administración de Empresas</span>
+  </div>
+  <div class="logo-wrap" style="margin-left:auto;">
+    <img src="imagen2.png" alt="Logo secundario" style="height:48px;">
+  </div>
+</header>
+
+<section class="class-hero">
+  <span class="class-label">Evaluación de unidad</span>
+  <h1>Funciones en Excel</h1>
+  <span class="class-subtitle">Repaso y evaluación de los temas vistos en sesión: funciones lógicas, funciones matemáticas y BUSCARV.</span>
+  <div class="meta-row">
+    <div class="meta-item">Asignatura<span>Excel Avanzado</span></div>
+    <div class="meta-item">Fecha<span>Sábado 20 de junio de 2026</span></div>
+    <div class="meta-item">Modalidad<span>Individual, en línea</span></div>
+  </div>
+</section>
+
+<div class="page-wrapper">
+
+  <div class="integrity-banner">
+    Esta evaluación se realiza de forma individual. No está permitido copiar, pegar texto ni cambiar de pestaña o ventana mientras la evaluación esté activa. Cada uno de estos intentos quedará registrado en el concentrado final de resultados.
+  </div>
+
+  <div class="alumno-form">
+    <input type="text" id="alumno-nombre" placeholder="Escribe tu nombre completo para iniciar">
+    <button onclick="iniciarAlumno()">Comenzar evaluación</button>
+  </div>
+
+  <div id="contenido-evaluacion" class="hidden">
+
+    <!-- ============================================================ -->
+    <!-- BLOQUE 1 — FUNCIONES LÓGICAS -->
+    <!-- ============================================================ -->
+    <div class="section">
+      <span class="section-label">Bloque 1</span>
+      <h2 class="section-title">Funciones lógicas: SI, Y, O</h2>
+
+      <div class="concept-box">
+        <span class="concept-title">Idea central</span>
+        <p>Una función lógica le dice a Excel que tome una decisión. La más usada es <strong>SI</strong>: revisa una condición y entrega un resultado distinto según sea verdadera o falsa.</p>
+      </div>
+
+      <div class="formula-block">
+        <code class="formula">=SI(condición, valor_si_verdadero, valor_si_falso)</code>
+        <p class="formula-note">Ejemplo: =SI(B2&gt;=7,"Aprobado","Reprobado")</p>
+      </div>
+
+      <div class="example-block">
+        <div class="example-header">Ejemplo resuelto</div>
+        <div class="example-body">
+          <div class="example-statement">Un alumno tiene calificación 8.5. ¿Aparece como aprobado o reprobado?</div>
+          <ol class="step-list">
+            <li><span class="step-n">1</span><span class="step-content">La condición es B2&gt;=7. Como 8.5 es mayor o igual a 7, la condición es verdadera.</span></li>
+            <li><span class="step-n">2</span><span class="step-content">Excel toma el segundo argumento: "Aprobado".</span></li>
+          </ol>
+          <div class="result-line">Resultado: Aprobado</div>
+        </div>
+      </div>
+
+      <div class="locked-block is-locked" data-code="LOGICA20" id="bloque-1">
+        <div class="unlock-row">
+          <input type="text" placeholder="Código de desbloqueo" id="code-1">
+          <button onclick="desbloquear(1)">Desbloquear preguntas</button>
+          <span class="unlock-msg" id="msg-1"></span>
+        </div>
+        <div class="quiz-content">
+          <div class="quiz-question" data-correct="b">
+            <p class="q-text">1. ¿Qué función usarías si el resultado depende de una condición verdadero/falso?</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q1" value="a"> SUMA</label>
+              <label><input type="radio" name="q1" value="b"> SI</label>
+              <label><input type="radio" name="q1" value="c"> BUSCARV</label>
+            </div>
+          </div>
+          <div class="quiz-question" data-correct="a">
+            <p class="q-text">2. =SI(A1&gt;=7,"Aprobado","Reprobado") — si A1 vale 6, ¿qué resultado entrega?</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q2" value="a"> Reprobado</label>
+              <label><input type="radio" name="q2" value="b"> Aprobado</label>
+              <label><input type="radio" name="q2" value="c"> Error</label>
+            </div>
+          </div>
+          <div class="quiz-question" data-correct="c">
+            <p class="q-text">3. La función Y() entrega VERDADERO solo cuando:</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q3" value="a"> Al menos una condición es verdadera</label>
+              <label><input type="radio" name="q3" value="b"> Ninguna condición es verdadera</label>
+              <label><input type="radio" name="q3" value="c"> Todas las condiciones son verdaderas</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-rule">
+
+    <!-- ============================================================ -->
+    <!-- BLOQUE 2 — FUNCIONES MATEMÁTICAS -->
+    <!-- ============================================================ -->
+    <div class="section">
+      <span class="section-label">Bloque 2</span>
+      <h2 class="section-title">Funciones matemáticas: SUMA, PROMEDIO, SUMAR.SI</h2>
+
+      <div class="concept-box">
+        <span class="concept-title">Idea central</span>
+        <p>Estas funciones realizan cálculos numéricos sobre un rango de celdas: sumar, promediar o sumar solo lo que cumple una condición.</p>
+      </div>
+
+      <div class="formula-block">
+        <code class="formula">=SUMA(rango)</code>
+        <code class="formula">=PROMEDIO(rango)</code>
+        <code class="formula">=SUMAR.SI(rango, criterio, rango_a_sumar)</code>
+        <p class="formula-note">Ejemplo: =SUMAR.SI(B2:B10,"Norte",C2:C10)</p>
+      </div>
+
+      <div class="example-block">
+        <div class="example-header">Ejemplo resuelto</div>
+        <div class="example-body">
+          <div class="example-statement">Quiero saber el total de ventas solo de la región "Norte".</div>
+          <ol class="step-list">
+            <li><span class="step-n">1</span><span class="step-content">El rango de criterio es la columna de regiones; el criterio es "Norte".</span></li>
+            <li><span class="step-n">2</span><span class="step-content">El rango a sumar es la columna de montos de venta.</span></li>
+          </ol>
+          <div class="result-line">Fórmula: =SUMAR.SI(B2:B10,"Norte",C2:C10)</div>
+        </div>
+      </div>
+
+      <div class="locked-block is-locked" data-code="MATE20" id="bloque-2">
+        <div class="unlock-row">
+          <input type="text" placeholder="Código de desbloqueo" id="code-2">
+          <button onclick="desbloquear(2)">Desbloquear preguntas</button>
+          <span class="unlock-msg" id="msg-2"></span>
+        </div>
+        <div class="quiz-content">
+          <div class="quiz-question" data-correct="b">
+            <p class="q-text">1. ¿Qué función calcula el valor medio de un grupo de celdas?</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q4" value="a"> SUMA</label>
+              <label><input type="radio" name="q4" value="b"> PROMEDIO</label>
+              <label><input type="radio" name="q4" value="c"> SI</label>
+            </div>
+          </div>
+          <div class="quiz-question" data-correct="c">
+            <p class="q-text">2. ¿Qué función usarías para sumar solo las ventas de la región "Sur"?</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q5" value="a"> PROMEDIO</label>
+              <label><input type="radio" name="q5" value="b"> SUMA</label>
+              <label><input type="radio" name="q5" value="c"> SUMAR.SI</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-rule">
+
+    <!-- ============================================================ -->
+    <!-- BLOQUE 3 — BUSCARV -->
+    <!-- ============================================================ -->
+    <div class="section">
+      <span class="section-label">Bloque 3</span>
+      <h2 class="section-title">Función BUSCARV</h2>
+
+      <div class="concept-box">
+        <span class="concept-title">Idea central</span>
+        <p>BUSCARV busca un valor en la primera columna de una tabla y regresa un dato de la misma fila, en la columna que indiques. Evita recorrer la lista manualmente.</p>
+      </div>
+
+      <div class="formula-block">
+        <code class="formula">=BUSCARV(valor_buscado, tabla, número_de_columna, FALSO)</code>
+        <p class="formula-note">El último argumento, FALSO, indica búsqueda exacta.</p>
+      </div>
+
+      <div class="example-block">
+        <div class="example-header">Ejemplo resuelto</div>
+        <div class="example-body">
+          <div class="example-statement">Tengo el código de un producto y quiero su precio, que está en la tercera columna de mi tabla.</div>
+          <ol class="step-list">
+            <li><span class="step-n">1</span><span class="step-content">El valor buscado es el código del producto.</span></li>
+            <li><span class="step-n">2</span><span class="step-content">La tabla incluye desde la columna del código hasta la del precio.</span></li>
+            <li><span class="step-n">3</span><span class="step-content">El número de columna es 3, porque el precio está en la tercera columna de la tabla.</span></li>
+          </ol>
+          <div class="result-line">Fórmula: =BUSCARV(A2,Tabla,3,FALSO)</div>
+        </div>
+      </div>
+
+      <div class="locked-block is-locked" data-code="VLOOKUP20" id="bloque-3">
+        <div class="unlock-row">
+          <input type="text" placeholder="Código de desbloqueo" id="code-3">
+          <button onclick="desbloquear(3)">Desbloquear preguntas</button>
+          <span class="unlock-msg" id="msg-3"></span>
+        </div>
+        <div class="quiz-content">
+          <div class="quiz-question" data-correct="a">
+            <p class="q-text">1. En =BUSCARV(A2,Tabla,3,FALSO), ¿qué significa el FALSO final?</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q6" value="a"> Que la búsqueda debe ser exacta</label>
+              <label><input type="radio" name="q6" value="b"> Que el resultado será negativo</label>
+              <label><input type="radio" name="q6" value="c"> Que la fórmula tiene un error</label>
+            </div>
+          </div>
+          <div class="quiz-question" data-correct="b">
+            <p class="q-text">2. ¿Qué buscaría el número de columna en BUSCARV?</p>
+            <div class="quiz-options">
+              <label><input type="radio" name="q7" value="a"> El número total de filas de la tabla</label>
+              <label><input type="radio" name="q7" value="b"> La columna dentro de la tabla donde está el dato que quiero obtener</label>
+              <label><input type="radio" name="q7" value="c"> El número de hojas del archivo</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-progress" id="progreso">0 de 7 preguntas contestadas</div>
+
+    <div class="submit-row">
+      <button id="btn-enviar" onclick="calcularResultados()" disabled>Enviar evaluación</button>
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- PANEL DE RESULTADOS -->
+  <!-- ============================================================ -->
+  <div id="results-panel" class="card">
+    <div class="watermark"><span id="watermark-text"></span></div>
+    <div class="results-inner">
+      <span class="card-title">Concentrado de resultados</span>
+      <div class="score-display">
+        <div class="score-number" id="score-final">0</div>
+        <div class="score-label">Calificación sobre 100</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box aciertos">
+          <div class="stat-num" id="num-aciertos">0</div>
+          <div class="stat-text">Aciertos</div>
+        </div>
+        <div class="stat-box errores">
+          <div class="stat-num" id="num-errores">0</div>
+          <div class="stat-text">Errores</div>
+        </div>
+        <div class="stat-box infracciones">
+          <div class="stat-num" id="num-infracciones">0</div>
+          <div class="stat-text">Intentos de infracción</div>
+        </div>
+      </div>
+      <div class="infraction-log" id="infraction-log"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <span><strong>IEDEP</strong> · Instituto de Educación Digital del Estado de Puebla</span>
+  <img src="imagen3.png" alt="" style="height:28px; opacity:.85;">
+</footer>
+
+<script>
+  // ── Estado general ────────────────────────────────────────────────────
+  let nombreAlumno = "";
+  let infracciones = 0;
+  const totalPreguntas = 7;
+
+  function iniciarAlumno() {
+    const val = document.getElementById('alumno-nombre').value.trim();
+    if (!val) {
+      alert('Por favor escribe tu nombre antes de continuar.');
+      return;
+    }
+    nombreAlumno = val;
+    document.getElementById('contenido-evaluacion').classList.remove('hidden');
+    document.querySelector('.alumno-form').classList.add('hidden');
+    activarMonitoreo();
+  }
+
+  // ── Desbloqueo de bloques por código ─────────────────────────────────
+  function desbloquear(n) {
+    const bloque = document.getElementById('bloque-' + n);
+    const input = document.getElementById('code-' + n);
+    const msg = document.getElementById('msg-' + n);
+    const codigoCorrecto = bloque.getAttribute('data-code');
+
+    if (input.value.trim().toUpperCase() === codigoCorrecto) {
+      bloque.classList.remove('is-locked');
+      msg.textContent = '';
+      msg.classList.remove('error');
+    } else {
+      msg.textContent = 'Código incorrecto. Pregunta al docente.';
+      msg.classList.add('error');
+    }
+  }
+
+  // ── Progreso de respuestas ────────────────────────────────────────────
+  document.addEventListener('change', function (e) {
+    if (e.target.type === 'radio') {
+      actualizarProgreso();
+    }
+  });
+
+  function actualizarProgreso() {
+    const nombres = new Set();
+    document.querySelectorAll('.quiz-question input[type="radio"]:checked').forEach(r => nombres.add(r.name));
+    document.getElementById('progreso').textContent = nombres.size + ' de ' + totalPreguntas + ' preguntas contestadas';
+    document.getElementById('btn-enviar').disabled = nombres.size < totalPreguntas;
+  }
+
+  // ── Cálculo de resultados ────────────────────────────────────────────
+  function calcularResultados() {
+    let aciertos = 0;
+    let errores = 0;
+
+    document.querySelectorAll('.quiz-question').forEach(q => {
+      const correcta = q.getAttribute('data-correct');
+      const seleccionado = q.querySelector('input[type="radio"]:checked');
+      if (seleccionado && seleccionado.value === correcta) {
+        aciertos++;
+      } else {
+        errores++;
+      }
+    });
+
+    const calificacion = Math.round((aciertos / totalPreguntas) * 100);
+
+    document.getElementById('contenido-evaluacion').classList.add('hidden');
+    document.getElementById('results-panel').style.display = 'block';
+    document.getElementById('score-final').textContent = calificacion;
+    document.getElementById('num-aciertos').textContent = aciertos;
+    document.getElementById('num-errores').textContent = errores;
+    document.getElementById('num-infracciones').textContent = infracciones;
+    document.getElementById('watermark-text').textContent = nombreAlumno;
+
+    const log = document.getElementById('infraction-log');
+    log.textContent = infracciones === 0
+      ? 'No se registraron intentos de copiar, pegar o cambiar de pestaña durante la evaluación.'
+      : 'Se registraron ' + infracciones + ' intento(s) de copiar, pegar o cambiar de pestaña durante la evaluación.';
+
+    desactivarMonitoreo();
+  }
+
+  // ── Monitoreo anti-infracción ────────────────────────────────────────
+  function registrarInfraccion() {
+    infracciones++;
+  }
+
+  function bloquearAccion(e) { e.preventDefault(); registrarInfraccion(); }
+
+  function manejarVisibilidad() {
+    if (document.hidden) { registrarInfraccion(); }
+  }
+
+  function activarMonitoreo() {
+    document.addEventListener('copy', bloquearAccion);
+    document.addEventListener('paste', bloquearAccion);
+    document.addEventListener('cut', bloquearAccion);
+    document.addEventListener('contextmenu', bloquearAccion);
+    document.addEventListener('visibilitychange', manejarVisibilidad);
+  }
+
+  function desactivarMonitoreo() {
+    document.removeEventListener('copy', bloquearAccion);
+    document.removeEventListener('paste', bloquearAccion);
+    document.removeEventListener('cut', bloquearAccion);
+    document.removeEventListener('contextmenu', bloquearAccion);
+    document.removeEventListener('visibilitychange', manejarVisibilidad);
+  }
+</script>
+
+</body>
+</html>
