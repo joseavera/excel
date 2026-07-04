@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contexto de Clase — Auditoria de Formulas | IEDEP</title>
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo-wrap">
+    <img src="imagen1.png" alt="Logo IEDEP">
+  </div>
+  <div class="header-text">
+    <span class="inst-name">Instituto de Educacion Digital del Estado de Puebla</span>
+    <span class="doc-title">Excel Avanzado &middot; Licenciatura en Administracion de Empresas &middot; 3er Cuatrimestre</span>
+  </div>
+  <div class="logo-wrap" style="margin-left:auto;">
+    <img src="imagen2.png" alt="Logo secundario" style="height:48px;">
+  </div>
+</header>
+
+<section class="class-hero">
+  <span class="class-label">Unidad 2 &middot; Primera sesion</span>
+  <h1>Auditoria de Formulas</h1>
+  <span class="class-subtitle">Aprende a identificar, interpretar y corregir errores en hojas de calculo usando las herramientas de auditoria de Excel.</span>
+  <div class="meta-row">
+    <div class="meta-item">Fecha<span>Sabado 4 de julio de 2026</span></div>
+    <div class="meta-item">Duracion<span>90 minutos</span></div>
+    <div class="meta-item">Modalidad<span>Mixta</span></div>
+    <div class="meta-item">Asesor<span>Mtro. Jose Armando Vera Rodriguez</span></div>
+  </div>
+</section>
+
+<div class="page-wrapper">
+
+  <!-- ============================================================ -->
+  <!-- DONDE ESTAMOS EN EL CURSO -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Ubicacion en el programa</span>
+    <h2 class="section-title">Donde estamos en el curso</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Unidad 1</th>
+          <th style="background:var(--guinda-mid);">Unidad 2 &mdash; HOY</th>
+          <th>Unidad 3</th>
+          <th>Unidad 4</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Funciones<br><span class="text-muted">SI, SUMA, BUSCARV</span></td>
+          <td><strong>Auditoria de Formulas</strong><br><span class="text-muted">Errores, precedentes, SIERROR</span></td>
+          <td>Gestion de Datos<br><span class="text-muted">Validaciones, consolidacion</span></td>
+          <td>Macros<br><span class="text-muted">Grabacion, VBA basico</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout note">
+      <p>En la Unidad 1 aprendiste a construir formulas. Antes de avanzar, necesitas saber que hacer cuando esas formulas fallan. Un administrador que no puede corregir sus propias hojas depende de otros para validar su trabajo.</p>
+    </div>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- PROPOSITO -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Para que sirve esta sesion</span>
+    <h2 class="section-title">Proposito</h2>
+
+    <div class="concept-box">
+      <span class="concept-title">Al terminar esta sesion</span>
+      <p>Seras capaz de <strong>identificar, interpretar y corregir errores en hojas de calculo</strong> utilizando las herramientas de auditoria integradas en Excel, con el fin de entregar informacion precisa y confiable en tu vida laboral.</p>
+    </div>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- COMPETENCIAS -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Lo que vas a desarrollar</span>
+    <h2 class="section-title">Competencias a desarrollar</h2>
+
+    <div class="competency-card">
+      <span class="comp-num">01</span>
+      <span class="comp-text"><strong>Reconoce</strong> los cinco codigos de error mas comunes de Excel (#DIV/0!, #VALOR!, #NOMBRE?, #N/A, #REF!) y explica en sus propias palabras por que ocurre cada uno.</span>
+    </div>
+
+    <div class="competency-card">
+      <span class="comp-num">02</span>
+      <span class="comp-text"><strong>Utiliza</strong> la herramienta Mostrar Formulas (Ctrl + `) para alternar entre la vista de resultados y la vista de formulas, identificando celdas con errores en toda la hoja.</span>
+    </div>
+
+    <div class="competency-card">
+      <span class="comp-num">03</span>
+      <span class="comp-text"><strong>Rastrea</strong> los precedentes y dependientes de una celda mediante las flechas de auditoria de Excel, comprendiendo la cadena de dependencias entre formulas.</span>
+    </div>
+
+    <div class="competency-card">
+      <span class="comp-num">04</span>
+      <span class="comp-text"><strong>Aplica</strong> la funcion SIERROR para proteger sus hojas de calculo, sustituyendo los mensajes de error por texto legible o por cero, sin ocultar el problema de fondo.</span>
+    </div>
+
+    <div class="competency-card">
+      <span class="comp-num">05</span>
+      <span class="comp-text"><strong>Corrige</strong> una hoja de calculo con errores reales usando la secuencia: Comprobacion de Errores &rarr; Rastrear Precedentes &rarr; edicion de formula &rarr; verificacion de resultado.</span>
+    </div>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- HERRAMIENTAS DE LA SESION -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Lo que usaremos en Excel</span>
+    <h2 class="section-title">Herramientas de la sesion</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Herramienta</th>
+          <th>Acceso rapido</th>
+          <th>Para que sirve</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Mostrar formulas</strong></td>
+          <td><code class="text-mono">Ctrl + `</code></td>
+          <td>Alterna entre ver los resultados y ver las formulas en todas las celdas al mismo tiempo.</td>
+        </tr>
+        <tr>
+          <td><strong>Comprobacion de Errores</strong></td>
+          <td><code class="text-mono">Formulas &rarr; Comprobar Errores</code></td>
+          <td>Navega celda por celda a traves de cada error detectado en la hoja activa.</td>
+        </tr>
+        <tr>
+          <td><strong>Rastrear Precedentes</strong></td>
+          <td><code class="text-mono">Formulas &rarr; Auditoria</code></td>
+          <td>Dibuja flechas azules desde las celdas que alimentan la formula activa.</td>
+        </tr>
+        <tr>
+          <td><strong>Rastrear Dependientes</strong></td>
+          <td><code class="text-mono">Formulas &rarr; Auditoria</code></td>
+          <td>Dibuja flechas azules hacia las celdas que usan el valor de la celda activa.</td>
+        </tr>
+        <tr>
+          <td><strong>Quitar Flechas</strong></td>
+          <td><code class="text-mono">Formulas &rarr; Auditoria</code></td>
+          <td>Elimina todas las flechas de rastreo de la hoja para limpiar la vista.</td>
+        </tr>
+        <tr>
+          <td><strong>SIERROR</strong></td>
+          <td><code class="text-mono">=SIERROR(formula, valor)</code></td>
+          <td>Devuelve un texto o numero personalizado cuando la formula produce cualquier tipo de error.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- TIPOS DE ERROR -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Referencia rapida</span>
+    <h2 class="section-title">Los cinco errores que veras hoy</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Error</th>
+          <th>Por que ocurre</th>
+          <th>Como corregirlo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong class="text-guinda">#DIV/0!</strong></td>
+          <td>Se divide entre cero o entre una celda vacia.</td>
+          <td>Usar SIERROR o verificar que el divisor no sea cero antes de dividir.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-guinda">#VALOR!</strong></td>
+          <td>La formula espera un numero y recibe texto, o viceversa.</td>
+          <td>Verificar que las celdas referenciadas contengan el tipo de dato correcto.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-guinda">#NOMBRE?</strong></td>
+          <td>Excel no reconoce el nombre de la funcion porque tiene un error tipografico.</td>
+          <td>Revisar la ortografia exacta de la funcion: SUMA, PROMEDIO, SI.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-guinda">#N/A</strong></td>
+          <td>BUSCARV no encuentra el valor buscado en la tabla.</td>
+          <td>Verificar que el codigo exista en la tabla o envolver con SIERROR.</td>
+        </tr>
+        <tr>
+          <td><strong class="text-guinda">#REF!</strong></td>
+          <td>Una celda referenciada fue eliminada o movida.</td>
+          <td>Reconstruir la formula apuntando a las celdas correctas.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- ESTRUCTURA DE LA SESION -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Plan del dia</span>
+    <h2 class="section-title">Estructura de la sesion &mdash; 90 minutos</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Tiempo</th>
+          <th>Bloque</th>
+          <th>Actividad</th>
+          <th>Recurso</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="text-muted">0 &ndash; 10 min</td>
+          <td>Inicio</td>
+          <td>Pregunta detonadora: &iquest;han visto un error en Excel? &iquest;Que hicieron? Lluvia de respuestas.</td>
+          <td class="text-muted">Pizarron / oral</td>
+        </tr>
+        <tr>
+          <td class="text-muted">10 &ndash; 25 min</td>
+          <td>Desarrollo</td>
+          <td>Exposicion de los cinco tipos de error. Ctrl+` en vivo para mostrar formulas frente a resultados.</td>
+          <td class="text-muted">Excel &mdash; Hoja 1</td>
+        </tr>
+        <tr>
+          <td class="text-muted">25 &ndash; 50 min</td>
+          <td>Desarrollo</td>
+          <td>Rastrear Precedentes y Dependientes con la nomina. El docente mueve valores y los alumnos predicen que celdas cambian.</td>
+          <td class="text-muted">Excel &mdash; Hoja 2</td>
+        </tr>
+        <tr>
+          <td class="text-muted">50 &ndash; 65 min</td>
+          <td>Desarrollo</td>
+          <td>SIERROR: comparar en vivo la busqueda con y sin proteccion cambiando el codigo en la celda amarilla.</td>
+          <td class="text-muted">Excel &mdash; Hoja 3</td>
+        </tr>
+        <tr>
+          <td class="text-muted">65 &ndash; 85 min</td>
+          <td>Cierre</td>
+          <td>Ejercicio individual: corregir los cinco errores de la Hoja 4 usando la secuencia completa de auditoria.</td>
+          <td class="text-muted">Excel &mdash; Hoja 4</td>
+        </tr>
+        <tr>
+          <td class="text-muted">85 &ndash; 90 min</td>
+          <td>Cierre</td>
+          <td>Plenaria rapida: &iquest;que error fue mas dificil de encontrar y por que?</td>
+          <td class="text-muted">Discusion grupal</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- FORMULA CLAVE -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Formula del dia</span>
+    <h2 class="section-title">SIERROR &mdash; la formula que protege tu trabajo</h2>
+
+    <div class="formula-block">
+      <code class="formula">=SIERROR( formula , valor_si_error )</code>
+      <p class="formula-note">Si la formula produce cualquier error, Excel muestra el valor_si_error en lugar del codigo de error.</p>
+    </div>
+
+    <div class="example-block">
+      <div class="example-header">Ejemplo resuelto</div>
+      <div class="example-body">
+        <div class="example-statement">Tengo un BUSCARV que a veces no encuentra el codigo buscado y muestra #N/A. Quiero que en ese caso aparezca el texto "No encontrado".</div>
+        <ol class="step-list">
+          <li>
+            <span class="step-n">1</span>
+            <span class="step-content">Sin proteccion la formula es: <code class="text-mono">=BUSCARV(A2,Tabla,3,FALSO)</code> &mdash; cuando el codigo no existe, el resultado es #N/A.</span>
+          </li>
+          <li>
+            <span class="step-n">2</span>
+            <span class="step-content">Envuelves toda la formula dentro de SIERROR y defines el mensaje que quieres mostrar cuando falla.</span>
+          </li>
+          <li>
+            <span class="step-n">3</span>
+            <span class="step-content">La formula corregida es: <code class="text-mono">=SIERROR(BUSCARV(A2,Tabla,3,FALSO),"No encontrado")</code></span>
+          </li>
+        </ol>
+        <div class="result-line">Resultado cuando el codigo existe: el precio del producto. Cuando no existe: "No encontrado".</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>SIERROR no oculta el problema de fondo &mdash; la formula sigue siendo tu responsabilidad. Lo que hace es darle al usuario final un mensaje legible en lugar de un codigo de error que no entiende.</p>
+    </div>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- EVALUACION -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Como se evaluara esta sesion</span>
+    <h2 class="section-title">Evaluacion</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Criterio</th>
+          <th>Instrumento</th>
+          <th>Porcentaje</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ejercicio de cierre &mdash; corregir correctamente los cinco errores de la Hoja 4 del archivo Excel.</td>
+          <td>Producto</td>
+          <td><strong>60 %</strong></td>
+        </tr>
+        <tr>
+          <td>Participacion durante la demostracion de Rastrear Precedentes: prediccion de celdas afectadas.</td>
+          <td>Observacion</td>
+          <td><strong>20 %</strong></td>
+        </tr>
+        <tr>
+          <td>Respuesta oral en la plenaria final: &iquest;cual fue el error mas dificil y por que?</td>
+          <td>Participacion</td>
+          <td><strong>20 %</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="section-rule">
+
+  <!-- ============================================================ -->
+  <!-- REFERENCIAS -->
+  <!-- ============================================================ -->
+  <div class="section">
+    <span class="section-label">Fuentes de consulta</span>
+    <h2 class="section-title">Referencias</h2>
+
+    <ul>
+      <li>Beltran, J. (2022). <em>Excel Avanzado 365</em>. IC Editorial.</li>
+      <li>Lomonaco, L. (2023). <em>Excel 2023: La guia completa para convertirse en un experto en Excel con el metodo Todo en Uno</em>. Sofia Martinez Editorial.</li>
+      <li>Microsoft Press. (2021). <em>Microsoft Excel step by step (Office 2021 and Microsoft 365)</em>. Pearson.</li>
+      <li>Microsoft. (2024). Funcion SIERROR. https://support.microsoft.com/es-es/office/funcion-si-error</li>
+      <li>Microsoft. (2024). Rastrear precedentes y dependientes. https://support.microsoft.com/es-es/office/mostrar-las-relaciones-entre-formulas-y-celdas</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <span><strong>IEDEP</strong> &middot; Instituto de Educacion Digital del Estado de Puebla &middot; Excel Avanzado &middot; Clase 4 de julio de 2026</span>
+  <img src="imagen3.png" alt="" style="height:28px; opacity:.85;">
+</footer>
+
+</body>
+</html>
