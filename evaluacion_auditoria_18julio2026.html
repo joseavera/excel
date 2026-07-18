@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación — Auditoría de Fórmulas | IEDEP</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* ── Lógica de evaluación únicamente — identidad visual en base.css ── */
+
+  .alumno-form {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .alumno-form input[type="text"] {
+    font-family: var(--font-ui);
+    font-size: .92rem;
+    padding: .6rem .85rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    flex: 1;
+    min-width: 240px;
+    color: var(--ink);
+    background: var(--white);
+  }
+  .alumno-form button {
+    font-family: var(--font-ui);
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--guinda);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .65rem 1.3rem;
+    cursor: pointer;
+  }
+  .alumno-form button:hover { background: var(--guinda-dark); }
+
+  .integrity-banner {
+    background: var(--guinda-light);
+    border: 1px solid #D8A8BA;
+    border-radius: var(--radius-md);
+    padding: .9rem 1.2rem;
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    color: var(--guinda-dark);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  /* ── Tarjeta de pregunta ── */
+  .question-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .question-header {
+    background: var(--guinda);
+    color: var(--white);
+    padding: .75rem 1.4rem;
+    font-family: var(--font-ui);
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .question-header .q-badge {
+    background: rgba(255,255,255,.15);
+    border-radius: 20px;
+    padding: .15rem .6rem;
+    font-size: .72rem;
+  }
+  .question-body {
+    padding: 1.3rem 1.5rem;
+    background: var(--off-white);
+  }
+  .scenario-box {
+    background: var(--surface);
+    border-left: 3px solid var(--guinda-rule);
+    padding: .85rem 1.1rem;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: .97rem;
+    line-height: 1.7;
+    margin-bottom: 1.1rem;
+    color: var(--ink);
+  }
+  .question-text {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: .9rem;
+    line-height: 1.5;
+  }
+
+  /* ── Opciones ── */
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .65rem .9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    font-size: .95rem;
+    line-height: 1.55;
+    color: var(--ink);
+    user-select: none;
+  }
+  .option-label:hover:not(.locked) {
+    border-color: var(--guinda-rule);
+    background: var(--guinda-light);
+  }
+  .option-label input[type="radio"] {
+    accent-color: var(--guinda);
+    flex-shrink: 0;
+    margin-top: .22rem;
+  }
+  .option-label.selected {
+    border-color: var(--guinda);
+    background: var(--guinda-light);
+  }
+  .option-label.locked { cursor: not-allowed; }
+
+  /* ── Progreso ── */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border-radius: 20px;
+    height: 8px;
+    margin: 1.2rem 0 .4rem;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    background: var(--guinda);
+    height: 100%;
+    border-radius: 20px;
+    transition: width .3s;
+    width: 0%;
+  }
+  .progress-label {
+    font-family: var(--font-ui);
+    font-size: .78rem;
+    color: var(--ink-muted);
+    text-align: right;
+  }
+
+  .submit-row {
+    text-align: right;
+    margin-top: 1.5rem;
+  }
+  .submit-row button {
+    font-family: var(--font-ui);
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--guinda);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: .75rem 1.6rem;
+    cursor: pointer;
+  }
+  .submit-row button:disabled {
+    background: var(--border-strong);
+    cursor: not-allowed;
+  }
+
+  /* ── Panel de resultados ── */
+  #results-panel { display: none; position: relative; overflow: hidden; }
+
+  .watermark {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .watermark span {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--guinda);
+    opacity: .06;
+    transform: rotate(-28deg);
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .results-inner { position: relative; z-index: 1; }
+
+  .score-display { text-align: center; padding: 1.5rem 0 .5rem; }
+  .score-number {
+    font-family: var(--font-display);
+    font-size: 4.5rem;
+    font-weight: 700;
+    color: var(--guinda);
+    line-height: 1;
+  }
+  .score-label {
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--ink-muted);
+    margin-top: .3rem;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
+
+  .stat-box {
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem .5rem;
+    background: var(--off-white);
+  }
+  .stat-box .stat-num { font-size: 2rem; font-weight: 700; font-family: var(--font-display); }
+  .stat-box.aciertos .stat-num  { color: #2E7D32; }
+  .stat-box.errores .stat-num   { color: var(--guinda-rule); }
+  .stat-box.infracciones .stat-num { color: #B45309; }
+  .stat-box .stat-text {
+    font-family: var(--font-ui);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ink-muted);
+    margin-top: .2rem;
+  }
+
+  .infraction-log {
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    color: var(--ink-secondary);
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: .85rem 1rem;
+    margin-top: .75rem;
+    line-height: 1.6;
+  }
+
+  /* ── Revisión de respuestas ── */
+  .review-section { margin-top: 2rem; }
+  .review-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 1.1rem;
+    overflow: hidden;
+  }
+  .review-header {
+    padding: .6rem 1.1rem;
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .review-header.correct  { background: #E8F5E9; color: #2E7D32; }
+  .review-header.incorrect { background: #FFEBEE; color: #C62828; }
+  .review-body { padding: .85rem 1.1rem; background: var(--off-white); font-size: .93rem; line-height: 1.65; }
+  .review-body .r-scenario { color: var(--ink-secondary); margin-bottom: .4rem; font-size: .88rem; }
+  .review-body .r-q { font-weight: 600; margin-bottom: .5rem; }
+  .review-body .r-answer { margin-top: .4rem; font-family: var(--font-ui); font-size: .85rem; }
+  .review-body .r-answer span { font-weight: 600; }
+  .r-correct  { color: #2E7D32; }
+  .r-wrong    { color: #C62828; text-decoration: line-through; }
+  .r-explain  { margin-top: .5rem; font-size: .85rem; color: var(--ink-secondary); font-style: italic; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo-wrap">
+    <img src="imagen1.png" alt="Logo IEDEP">
+  </div>
+  <div class="header-text">
+    <span class="inst-name">Instituto de Educación Digital del Estado de Puebla</span>
+    <span class="doc-title">Excel Avanzado &middot; Licenciatura en Administración de Empresas &middot; 3er Cuatrimestre</span>
+  </div>
+  <div class="logo-wrap" style="margin-left:auto;">
+    <img src="imagen2.png" alt="Logo secundario" style="height:48px;">
+  </div>
+</header>
+
+<section class="class-hero">
+  <span class="class-label">Evaluación &middot; Unidad 2</span>
+  <h1>Auditoría de Fórmulas</h1>
+  <span class="class-subtitle">Diez casos empresariales reales. Lee cada escenario con atención y selecciona la acción más adecuada. Una vez que elijas una respuesta, no podrás modificarla.</span>
+  <div class="meta-row">
+    <div class="meta-item">Fecha<span>Viernes 18 de julio de 2026</span></div>
+    <div class="meta-item">Preguntas<span>10 preguntas</span></div>
+    <div class="meta-item">Modalidad<span>Individual, en línea</span></div>
+    <div class="meta-item">Asesor<span>Mtro. José Armando Vera Rodríguez</span></div>
+  </div>
+</section>
+
+<div class="page-wrapper">
+
+  <div class="integrity-banner">
+    Esta evaluación se realiza de forma individual. No está permitido copiar, pegar, cortar ni cambiar de pestaña o ventana mientras la evaluación esté activa. Cada uno de estos intentos quedará registrado. Una vez seleccionada una respuesta, no podrá modificarse.
+  </div>
+
+  <!-- Formulario de inicio -->
+  <div class="alumno-form" id="inicio-form">
+    <input type="text" id="alumno-nombre" placeholder="Escribe tu nombre completo para iniciar la evaluación">
+    <button onclick="iniciar()">Comenzar</button>
+  </div>
+
+  <!-- Contenido de la evaluación -->
+  <div id="contenido-eval" class="hidden">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="prog-fill"></div>
+    </div>
+    <p class="progress-label" id="prog-label">0 de 10 respondidas</p>
+
+    <div id="preguntas-container"></div>
+
+    <div class="submit-row">
+      <button id="btn-enviar" onclick="enviar()" disabled>Enviar evaluación</button>
+    </div>
+  </div>
+
+  <!-- Panel de resultados -->
+  <div id="results-panel">
+    <div class="watermark"><span id="wm-text"></span></div>
+    <div class="results-inner">
+      <span class="card-title" style="font-size:1.1rem; display:block; margin-bottom:.5rem;">Concentrado de resultados</span>
+
+      <!-- Nombre del alumno prominente -->
+      <div id="alumno-display" style="
+        text-align:center;
+        margin: .5rem 0 1.2rem;
+        padding: .75rem 1.2rem;
+        background: var(--guinda-light);
+        border: 1px solid #D8A8BA;
+        border-radius: var(--radius-md);
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: var(--guinda);
+        letter-spacing: .01em;
+      "></div>
+
+      <div class="score-display">
+        <div class="score-number" id="score-num">0</div>
+        <div class="score-label">Calificación sobre 100</div>
+      </div>
+
+      <!-- Retroalimentación según calificación -->
+      <div id="feedback-box" style="
+        margin: 1rem 0;
+        padding: 1rem 1.3rem;
+        border-radius: var(--radius-md);
+        font-family: var(--font-ui);
+        font-size: .95rem;
+        line-height: 1.65;
+        border-left: 4px solid var(--guinda);
+      "></div>
+
+      <div class="stats-grid">
+        <div class="stat-box aciertos">
+          <div class="stat-num" id="num-aciertos">0</div>
+          <div class="stat-text">Aciertos</div>
+        </div>
+        <div class="stat-box errores">
+          <div class="stat-num" id="num-errores">0</div>
+          <div class="stat-text">Errores</div>
+        </div>
+        <div class="stat-box infracciones">
+          <div class="stat-num" id="num-infrcc">0</div>
+          <div class="stat-text">Infracciones</div>
+        </div>
+      </div>
+
+      <div class="infraction-log" id="infraction-log"></div>
+
+      <div class="review-section">
+        <h3 style="color:var(--guinda); margin-bottom:1rem;">Revisión de respuestas</h3>
+        <div id="review-container"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <span><strong>IEDEP</strong> &middot; Instituto de Educación Digital del Estado de Puebla &middot; Excel Avanzado &middot; 18 de julio de 2026</span>
+  <img src="imagen3.png" alt="" style="height:28px; opacity:.85;">
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// BANCO DE PREGUNTAS
+// Cada pregunta: { scenario, question, options: [{text, correct, explain}] }
+// La opción correcta se marca con correct: true
+// ══════════════════════════════════════════════════════════════════════════
+const BANCO = [
+  {
+    scenario: "La coordinadora de recursos humanos de una distribuidora abre el archivo de nómina mensual el día de pago. La celda que muestra el total a transferir por empleado indica #¡DIV/0! en diez filas.",
+    question: "¿Cuál es la causa más probable de este error y cuál es el primer paso correcto para diagnosticarlo?",
+    options: [
+      { text: "La columna de horas trabajadas contiene celdas vacías o con valor cero, y se está dividiendo el salario entre ese campo. El primer paso es usar Fórmulas → Comprobación de Errores para navegar a la primera celda afectada.", correct: true, explain: "#¡DIV/0! ocurre exclusivamente cuando el divisor es cero o está vacío. Comprobación de Errores es la herramienta diseñada para navegar celda a celda hacia cada error." },
+      { text: "El archivo está protegido y no permite que Excel calcule las fórmulas. El primer paso es desproteger la hoja desde la pestaña Revisar.", correct: false, explain: "Un archivo protegido no genera #¡DIV/0!; ese error proviene de una división entre cero, independientemente de la protección." },
+      { text: "Hay un conflicto de versiones entre Excel 2019 y Excel 365. El primer paso es guardar el archivo en formato .xlsx compatible.", correct: false, explain: "La compatibilidad de versiones no genera #¡DIV/0!. Ese error siempre indica una división entre cero o celda vacía." },
+      { text: "Las celdas que muestran el error tienen formato de texto, lo que impide el cálculo numérico. El primer paso es cambiar el formato de celda a Número.", correct: false, explain: "El formato de texto genera #¡VALOR! o impide el cálculo, pero no #¡DIV/0!, que es exclusivo de divisiones entre cero." }
+    ]
+  },
+  {
+    scenario: "El analista financiero de una cadena de tiendas recibe un archivo de Excel con el presupuesto anual. Al revisarlo nota que la celda E14, que debería mostrar la utilidad neta del trimestre, indica #¡VALOR!.",
+    question: "El analista necesita entender qué celdas están alimentando E14 antes de corregirla. ¿Qué herramienta de Excel debe usar y qué busca?",
+    options: [
+      { text: "Fórmulas → Rastrear Precedentes. Las flechas azules le mostrarán las celdas que alimentan E14, permitiéndole identificar cuál contiene texto en lugar de un número.", correct: true, explain: "Rastrear Precedentes dibuja flechas desde las celdas que alimentan la fórmula activa, lo que permite identificar directamente cuál tiene el tipo de dato incorrecto." },
+      { text: "Inicio → Buscar y Reemplazar. Busca el símbolo # en todo el libro para encontrar todas las celdas con error.", correct: false, explain: "Buscar y Reemplazar no diagnostica fórmulas; solo localiza texto. No ayuda a entender la causa de #¡VALOR!." },
+      { text: "Vista → Inmovilizar paneles. Divide la pantalla para ver simultáneamente las columnas de ingresos y gastos.", correct: false, explain: "Inmovilizar paneles es una herramienta de visualización, no de auditoría de fórmulas." },
+      { text: "Datos → Validación de datos. Agrega una regla que impida ingresar texto en las celdas del rango.", correct: false, explain: "La validación de datos previene futuros errores de entrada, pero no diagnostica ni corrige el #¡VALOR! actual." }
+    ]
+  },
+  {
+    scenario: "La asistente de dirección de una empresa importadora construyó un sistema en Excel para buscar el precio de cada proveedor por código de producto. Al ingresar el código PR-089, la celda de resultado muestra #N/A aunque el producto existe en el catálogo.",
+    question: "¿Cuál de las siguientes acciones resuelve el problema de forma profesional y previene que el error vuelva a ocurrir con otros códigos?",
+    options: [
+      { text: "Envolver la función BUSCARV dentro de SIERROR: =SIERROR(BUSCARV(A2,Catalogo,3,FALSO),\"Código no registrado\"), y verificar que el código en A2 y en la primera columna del catálogo tengan exactamente el mismo formato (sin espacios adicionales).", correct: true, explain: "SIERROR maneja el error de forma elegante para el usuario. La verificación de formato es la causa más común de #N/A cuando el dato sí existe visualmente." },
+      { text: "Eliminar la función BUSCARV y copiar manualmente el precio desde el catálogo cada vez que se necesite.", correct: false, explain: "Copiar manualmente introduce riesgo de error humano y elimina la automatización que justifica el uso de BUSCARV." },
+      { text: "Cambiar el último argumento de BUSCARV de FALSO a VERDADERO para que Excel busque de forma aproximada.", correct: false, explain: "VERDADERO hace búsqueda aproximada y requiere que la tabla esté ordenada. No resuelve el #N/A y puede devolver resultados incorrectos." },
+      { text: "Agregar la columna de códigos al final del catálogo para que BUSCARV la encuentre más fácilmente.", correct: false, explain: "BUSCARV busca en la primera columna del rango indicado. Cambiar la posición de las columnas sin ajustar la fórmula genera más errores." }
+    ]
+  },
+  {
+    scenario: "Durante la presentación mensual de resultados, el gerente de ventas nota que la celda que calcula el porcentaje de cumplimiento de meta muestra #¡REF! en lugar del valor esperado. Esto ocurrió después de que el analista eliminó una columna de la hoja la semana anterior.",
+    question: "¿Cómo debe proceder el gerente para corregir el error de forma eficiente sin reconstruir toda la hoja?",
+    options: [
+      { text: "Usar Ctrl+Z para deshacer la eliminación de columna si aún es posible; si no, hacer clic en la celda con #¡REF!, revisar la fórmula en la barra de fórmulas e identificar qué referencia quedó inválida para sustituirla por la columna correcta.", correct: true, explain: "#¡REF! indica que una celda referenciada fue eliminada. Ctrl+Z es la solución inmediata si la sesión lo permite; de lo contrario, se reconstruye manualmente la referencia." },
+      { text: "Copiar y pegar la celda con error en una hoja nueva para aislar el problema.", correct: false, explain: "Copiar una celda con #¡REF! a otra hoja no resuelve el error; solo lo traslada." },
+      { text: "Guardar el archivo como .csv para eliminar las fórmulas y conservar solo los valores.", correct: false, explain: "Guardar como .csv elimina todas las fórmulas permanentemente, lo que destruye el modelo de cálculo del archivo." },
+      { text: "Usar Fórmulas → Mostrar fórmulas (Ctrl+`) para ver todas las fórmulas y borrar las que tienen el símbolo #¡REF!.", correct: false, explain: "Mostrar fórmulas ayuda a localizar el error, pero borrar la celda no lo corrige; hay que reconstruir la referencia correcta." }
+    ]
+  },
+  {
+    scenario: "El encargado de inventarios de una empresa de logística recibe una hoja de Excel donde la columna de valor total de cada producto (cantidad × precio) devuelve #¡NOMBRE? en todas las filas. La fórmula en la columna es =MULTIPLICAR(B2,C2).",
+    question: "¿Cuál es la causa exacta del error y cómo se corrige?",
+    options: [
+      { text: "La función MULTIPLICAR no existe en Excel. Debe reemplazarse por la operación directa =B2*C2 o por =PRODUCTO(B2,C2), que sí es una función válida de Excel.", correct: true, explain: "#¡NOMBRE? indica que Excel no reconoce el nombre de la función. MULTIPLICAR no existe; la multiplicación se hace con el operador * o con la función PRODUCTO." },
+      { text: "Las columnas B y C tienen formato de moneda, lo que impide la multiplicación. Debe cambiarse el formato a Número general antes de calcular.", correct: false, explain: "El formato de celda no causa #¡NOMBRE?; ese error es exclusivo de funciones con nombre incorrecto o mal escrito." },
+      { text: "La hoja de cálculo está en modo de compatibilidad con versiones anteriores de Excel y no reconoce funciones modernas. Debe guardarse en formato .xlsx actual.", correct: false, explain: "El modo de compatibilidad no genera #¡NOMBRE?. El problema es que MULTIPLICAR simplemente no existe como función en ninguna versión de Excel." },
+      { text: "La fórmula debe colocarse con el signo $ para fijar las referencias: =MULTIPLICAR($B$2,$C$2).", correct: false, explain: "Las referencias absolutas ($) no cambian el nombre de la función. El error seguiría siendo el mismo." }
+    ]
+  },
+  {
+    scenario: "La contadora de una empresa constructora quiere verificar que una fórmula compleja en la celda G45 (que calcula la depreciación anual de cinco activos) no está afectando ningún otro cálculo del libro antes de modificarla.",
+    question: "¿Cuál es la forma correcta de verificar el impacto de G45 en el resto del libro antes de editarla?",
+    options: [
+      { text: "Hacer clic en G45 y usar Fórmulas → Rastrear Dependientes. Las flechas azules mostrarán todas las celdas del libro que usan el valor de G45, permitiéndole evaluar el impacto antes de cualquier cambio.", correct: true, explain: "Rastrear Dependientes responde a la pregunta '¿quién usa este valor?', que es exactamente lo que necesita antes de modificar una celda con posible impacto en cascada." },
+      { text: "Hacer clic en G45 y usar Fórmulas → Rastrear Precedentes para ver de dónde viene el cálculo.", correct: false, explain: "Rastrear Precedentes muestra de dónde vienen los datos hacia G45, no hacia dónde van. Para ver el impacto de G45 en otras celdas se necesita Rastrear Dependientes." },
+      { text: "Copiar el valor numérico de G45 y buscar ese número en todo el libro con Ctrl+B para encontrar las celdas que lo usan.", correct: false, explain: "Buscar un valor numérico no identifica dependencias de fórmulas; otras celdas pueden mostrar el mismo número por coincidencia, generando falsos positivos." },
+      { text: "Activar el modo de edición en G45 presionando F2 para que Excel resalte en colores las celdas que usa esa fórmula.", correct: false, explain: "F2 resalta las celdas que alimentan G45 (sus precedentes), no las celdas que dependen de G45." }
+    ]
+  },
+  {
+    scenario: "El coordinador de compras de una cadena de restaurantes recibe un archivo de Excel con errores en múltiples celdas de distintas hojas. Necesita corregirlos todos de forma ordenada sin omitir ninguno.",
+    question: "¿Cuál es el flujo de trabajo más eficiente para encontrar y corregir todos los errores del libro de manera sistemática?",
+    options: [
+      { text: "Ir a Fórmulas → Comprobación de Errores, que navega automáticamente de celda en celda a través de cada error del libro activo, muestra la fórmula involucrada y ofrece opciones de corrección; repetir hasta que el sistema indique que no hay más errores.", correct: true, explain: "Comprobación de Errores es la herramienta diseñada específicamente para este flujo: navega de error en error de forma secuencial, garantizando que no se omita ninguno." },
+      { text: "Usar Ctrl+F para buscar el símbolo # en todas las hojas del libro y anotar manualmente las celdas encontradas.", correct: false, explain: "Buscar # con Ctrl+F es ineficiente y puede omitir errores si el símbolo aparece también en texto. No ofrece contexto ni opciones de corrección." },
+      { text: "Presionar Ctrl+` para ver todas las fórmulas del libro y revisar visualmente cada columna buscando errores.", correct: false, explain: "Ctrl+` muestra las fórmulas pero no navega a los errores ni los agrupa; en un libro grande es impráctica para una revisión sistemática." },
+      { text: "Eliminar todas las fórmulas del libro y reingresarlas desde cero para asegurarse de que no hay errores.", correct: false, explain: "Reingresar todas las fórmulas desde cero es el enfoque más costoso en tiempo y propenso a introducir nuevos errores." }
+    ]
+  },
+  {
+    scenario: "La administradora de una clínica privada construyó un tablero en Excel que muestra automáticamente el nombre del médico de guardia según el código de turno ingresado. Cuando se ingresa un código de turno no registrado, la celda muestra #N/A y el resto del tablero deja de funcionar porque otras celdas dependen de ese resultado.",
+    question: "¿Cómo debe modificar la fórmula de búsqueda para que el tablero siga funcionando aunque el código no exista en el catálogo?",
+    options: [
+      { text: "Envolver el BUSCARV con SIERROR y definir un valor neutro que no rompa las fórmulas dependientes: =SIERROR(BUSCARV(A1,Turnos,2,FALSO),\"\"), de modo que cuando no haya resultado, las celdas dependientes reciban una cadena vacía en lugar de un error.", correct: true, explain: "SIERROR con una cadena vacía (\"\") permite que las celdas dependientes reciban un valor legible y neutral, evitando la propagación del error en cascada." },
+      { text: "Agregar una columna auxiliar que convierta todos los posibles errores a cero usando la función ESERROR antes de que el BUSCARV los procese.", correct: false, explain: "ESERROR evalúa si una celda tiene error, pero no sustituye el error por un valor utilizable dentro de la cadena de fórmulas de forma tan limpia como SIERROR." },
+      { text: "Proteger la celda de entrada para que solo se puedan ingresar códigos que existan en el catálogo, usando validación de datos con lista desplegable.", correct: false, explain: "La validación de datos es una medida preventiva válida, pero no resuelve el comportamiento de la fórmula cuando el código no existe, especialmente si el catálogo se actualiza frecuentemente." },
+      { text: "Cambiar el BUSCARV por BUSCARH para que la búsqueda sea horizontal y más rápida.", correct: false, explain: "BUSCARH busca en filas, no en columnas. Cambiar a BUSCARH sin un motivo estructural no resuelve el #N/A ni mejora el rendimiento." }
+    ]
+  },
+  {
+    scenario: "El director de operaciones de una empresa de manufactura quiere presentar el archivo de costos de producción a la junta directiva, pero antes necesita asegurarse de que todos están viendo los resultados calculados y no las fórmulas en las celdas.",
+    question: "¿Qué debe hacer el director para verificar rápidamente que el archivo muestra resultados y no fórmulas, y cómo activa o desactiva esa vista?",
+    options: [
+      { text: "Presionar Ctrl+` (acento grave) para alternar entre la vista de fórmulas y la vista de resultados; si las celdas muestran las fórmulas escritas, una segunda pulsación de Ctrl+` regresa a la vista de resultados.", correct: true, explain: "Ctrl+` es el atajo de teclado que activa y desactiva Mostrar Fórmulas. Es el método más rápido y preciso para verificar el estado actual de la hoja." },
+      { text: "Ir a Archivo → Opciones → Fórmulas y activar la casilla 'Mostrar fórmulas en las celdas en lugar de sus resultados calculados'.", correct: false, explain: "Esta opción sí controla la vista de fórmulas, pero Ctrl+` es la forma más rápida de verificarlo en el momento; la ruta de Opciones es más lenta y menos intuitiva en una presentación." },
+      { text: "Seleccionar todas las celdas con Ctrl+E y aplicar el formato 'General' para que Excel recalcule y muestre los resultados.", correct: false, explain: "Cambiar el formato a General no afecta si las fórmulas están en modo de visualización; el problema es la configuración de Mostrar Fórmulas, no el formato de celda." },
+      { text: "Guardar el archivo como PDF antes de la presentación para que los valores queden fijos y no puedan modificarse.", correct: false, explain: "Guardar como PDF es útil para presentaciones, pero no verifica ni corrige el estado de visualización del archivo Excel en sí." }
+    ]
+  },
+  {
+    scenario: "La gerente de una empresa de servicios de limpieza detectó que la hoja de cálculo con la que calcula los pagos quincenales tiene un error en una sola celda que está afectando el resultado de otras veinte celdas. Quiere entender la cadena completa antes de corregir nada.",
+    question: "¿Cuál es el procedimiento correcto para visualizar toda la cadena de dependencias de esa celda con error antes de editarla?",
+    options: [
+      { text: "Hacer clic en la celda con error, usar Fórmulas → Rastrear Precedentes para ver de dónde vienen sus datos, y luego Fórmulas → Rastrear Dependientes para ver a qué celdas afecta; una vez entendida la cadena completa, corregir la fórmula y usar Quitar Flechas para limpiar la vista.", correct: true, explain: "El flujo completo de auditoría es: Precedentes (origen) → Dependientes (impacto) → corrección → Quitar Flechas. Esto garantiza entender el sistema antes de modificarlo." },
+      { text: "Copiar la celda con error a una hoja nueva, corregirla ahí y luego pegar el resultado corregido de vuelta en la hoja original.", correct: false, explain: "Aislar la celda en otra hoja rompe las referencias originales y no permite ver la cadena de dependencias en contexto." },
+      { text: "Usar Ctrl+Z repetidamente hasta que los errores desaparezcan, asumiendo que fueron causados por una edición reciente.", correct: false, explain: "Usar Ctrl+Z sin diagnosticar la causa puede deshacer cambios legítimos y no garantiza que el error desaparezca." },
+      { text: "Seleccionar las veinte celdas afectadas y presionar Suprimir para borrarlas, luego reconstruirlas con fórmulas nuevas.", correct: false, explain: "Borrar y reconstruir sin diagnosticar la causa original puede reproducir el mismo error y destruye información válida." }
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════════════════════════════
+let nombreAlumno  = "";
+let infracciones  = 0;
+let infraccionLog = [];
+let ordenPreguntas = [];      // índices barajados del BANCO
+let ordenOpciones  = [];      // para cada pregunta, orden barajado de sus opciones
+let respuestas     = {};      // { preguntaIdx: opcionOriginalIdx }
+let bloqueadas     = {};      // { preguntaIdx: true } cuando se fija la respuesta
+
+// ── Fisher-Yates shuffle ──────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// INICIO
+// ══════════════════════════════════════════════════════════════════════════
+function iniciar() {
+  const val = document.getElementById("alumno-nombre").value.trim();
+  if (!val) { alert("Escribe tu nombre completo para continuar."); return; }
+  nombreAlumno = val;
+
+  // Barajar preguntas
+  ordenPreguntas = shuffle([...Array(BANCO.length).keys()]);
+  // Barajar opciones de cada pregunta
+  ordenOpciones = BANCO.map(q => shuffle([...Array(q.options.length).keys()]));
+
+  document.getElementById("inicio-form").classList.add("hidden");
+  document.getElementById("contenido-eval").classList.remove("hidden");
+  renderPreguntas();
+  activarMonitoreo();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════════════════
+function renderPreguntas() {
+  const container = document.getElementById("preguntas-container");
+  container.innerHTML = "";
+
+  ordenPreguntas.forEach((bancoIdx, posicion) => {
+    const q   = BANCO[bancoIdx];
+    const ord = ordenOpciones[bancoIdx];
+
+    const card = document.createElement("div");
+    card.className = "question-card";
+    card.id = `qcard-${bancoIdx}`;
+
+    card.innerHTML = `
+      <div class="question-header">
+        <span>Escenario empresarial ${posicion + 1}</span>
+        <span class="q-badge">Selección única</span>
+      </div>
+      <div class="question-body">
+        <div class="scenario-box">${q.scenario}</div>
+        <p class="question-text">${q.question}</p>
+        <div class="options-list" id="opts-${bancoIdx}">
+          ${ord.map((opIdx, visualPos) => `
+            <label class="option-label" id="opt-${bancoIdx}-${opIdx}"
+                   onclick="elegir(${bancoIdx}, ${opIdx}, this)">
+              <input type="radio" name="q-${bancoIdx}" value="${opIdx}">
+              <span>${String.fromCharCode(65 + visualPos)}.&nbsp; ${q.options[opIdx].text}</span>
+            </label>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ELEGIR — irreversible
+// ══════════════════════════════════════════════════════════════════════════
+function elegir(bancoIdx, opIdx, labelEl) {
+  if (bloqueadas[bancoIdx]) return;   // ya contestada, ignorar
+
+  // Marcar la opción
+  const radio = labelEl.querySelector("input[type='radio']");
+  radio.checked = true;
+
+  // Fijar visualmente
+  const contenedor = document.getElementById(`opts-${bancoIdx}`);
+  contenedor.querySelectorAll(".option-label").forEach(l => {
+    l.classList.remove("selected");
+    l.classList.add("locked");
+    l.querySelector("input[type='radio']").disabled = true;
+  });
+  labelEl.classList.add("selected");
+
+  // Guardar respuesta y bloquear
+  respuestas[bancoIdx]  = opIdx;
+  bloqueadas[bancoIdx]  = true;
+
+  actualizarProgreso();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PROGRESO
+// ══════════════════════════════════════════════════════════════════════════
+function actualizarProgreso() {
+  const respondidas = Object.keys(respuestas).length;
+  const total       = BANCO.length;
+  const pct         = (respondidas / total) * 100;
+
+  document.getElementById("prog-fill").style.width   = pct + "%";
+  document.getElementById("prog-label").textContent   = `${respondidas} de ${total} respondidas`;
+  document.getElementById("btn-enviar").disabled      = respondidas < total;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ENVIAR Y CALCULAR
+// ══════════════════════════════════════════════════════════════════════════
+function enviar() {
+  if (!confirm("¿Confirmas que deseas enviar tu evaluación? Esta acción no puede deshacerse.")) return;
+
+  let aciertos = 0;
+  let errores  = 0;
+  const reviewItems = [];
+
+  ordenPreguntas.forEach((bancoIdx, posicion) => {
+    const q         = BANCO[bancoIdx];
+    const elegida   = respuestas[bancoIdx];
+    const esCorrecta = q.options[elegida].correct;
+
+    if (esCorrecta) aciertos++;
+    else            errores++;
+
+    reviewItems.push({ posicion: posicion + 1, bancoIdx, elegida, esCorrecta });
+  });
+
+  const calificacion = Math.round((aciertos / BANCO.length) * 100);
+
+  // Ocultar evaluación
+  document.getElementById("contenido-eval").classList.add("hidden");
+
+  // Mostrar resultados
+  const panel = document.getElementById("results-panel");
+  panel.style.display = "block";
+
+  document.getElementById("score-num").textContent    = calificacion;
+  document.getElementById("num-aciertos").textContent = aciertos;
+  document.getElementById("num-errores").textContent  = errores;
+  document.getElementById("num-infrcc").textContent   = infracciones;
+  document.getElementById("wm-text").textContent      = nombreAlumno;
+
+  // Nombre prominente
+  document.getElementById("alumno-display").textContent = nombreAlumno;
+
+  // Retroalimentación según calificación
+  const fb     = document.getElementById("feedback-box");
+  let fbText   = "";
+  let fbBg     = "";
+  let fbBorder = "";
+  if (calificacion >= 90) {
+    fbBg     = "#E8F5E9";
+    fbBorder = "#2E7D32";
+    fbText   = `<strong style="color:#2E7D32">Excelente trabajo, ${nombreAlumno.split(" ")[0]}.</strong> Dominas con solidez las herramientas de Auditoría de Fórmulas. Distingues correctamente entre los tipos de error, sabes cuándo aplicar Rastrear Precedentes o Dependientes y usas SIERROR de forma profesional. Estás listo para aplicar estos conocimientos en un entorno laboral real.`;
+  } else if (calificacion >= 80) {
+    fbBg     = "#F1F8E9";
+    fbBorder = "#558B2F";
+    fbText   = `<strong style="color:#558B2F">Buen resultado, ${nombreAlumno.split(" ")[0]}.</strong> Tienes una comprensión sólida del tema. Revisa las preguntas que fallaste: presta atención especial a la diferencia entre Rastrear Precedentes (de dónde viene el dato) y Rastrear Dependientes (a quién afecta), ya que es una distinción clave en situaciones de diagnóstico.`;
+  } else if (calificacion >= 70) {
+    fbBg     = "#FFF8E1";
+    fbBorder = "#F9A825";
+    fbText   = `<strong style="color:#E65100">Resultado suficiente, ${nombreAlumno.split(" ")[0]}.</strong> Aprobaste, pero hay áreas de mejora importantes. Vuelve a revisar los escenarios empresariales que fallaste y compara tu respuesta con la correcta. Enfócate especialmente en entender para qué sirve cada herramienta de auditoría y cuándo aplicar SIERROR en lugar de solo corregir la fórmula.`;
+  } else if (calificacion >= 60) {
+    fbBg     = "#FFF3E0";
+    fbBorder = "#E65100";
+    fbText   = `<strong style="color:#E65100">Por debajo del mínimo, ${nombreAlumno.split(" ")[0]}.</strong> No alcanzaste la calificación mínima. Es necesario que repases los materiales de la Unidad 2: los tipos de error (#DIV/0!, #VALOR!, #NOMBRE?, #N/A, #REF!), el flujo de Comprobación de Errores, y la función SIERROR. Consulta el archivo Excel de práctica y el contexto de clase antes de la siguiente sesión.`;
+  } else {
+    fbBg     = "#FFEBEE";
+    fbBorder = "#C62828";
+    fbText   = `<strong style="color:#C62828">Es necesario reforzar, ${nombreAlumno.split(" ")[0]}.</strong> El resultado indica que los conceptos de Auditoría de Fórmulas requieren repaso completo. Revisa la hoja de contexto de clase, practica con el archivo Excel de la Unidad 2 y analiza cada pregunta de esta evaluación con su explicación. Si tienes dudas, acércate al asesor antes de la siguiente clase.`;
+  }
+  fb.style.background  = fbBg;
+  fb.style.borderColor = fbBorder;
+  fb.innerHTML         = fbText;
+
+  const logEl = document.getElementById("infraction-log");
+  if (infracciones === 0) {
+    logEl.textContent = "No se registraron intentos de infracción durante la evaluación.";
+  } else {
+    logEl.innerHTML = `<strong>Se registraron ${infracciones} intento(s) de infracción:</strong><br>` +
+      infraccionLog.map(i => `&nbsp;&bull;&nbsp;${i}`).join("<br>");
+  }
+
+  // Revisión de respuestas
+  const reviewContainer = document.getElementById("review-container");
+  reviewContainer.innerHTML = "";
+
+  reviewItems.forEach(({ posicion, bancoIdx, elegida, esCorrecta }) => {
+    const q          = BANCO[bancoIdx];
+    const correctaIdx = q.options.findIndex(o => o.correct);
+    const div = document.createElement("div");
+    div.className = "review-card";
+    div.innerHTML = `
+      <div class="review-header ${esCorrecta ? "correct" : "incorrect"}">
+        <span>Pregunta ${posicion}</span>
+        <span>${esCorrecta ? "Correcta" : "Incorrecta"}</span>
+      </div>
+      <div class="review-body">
+        <p class="r-scenario">${q.scenario.substring(0, 120)}…</p>
+        <p class="r-q">${q.question}</p>
+        ${!esCorrecta ? `
+          <p class="r-answer r-wrong">Tu respuesta: ${q.options[elegida].text}</p>
+        ` : ""}
+        <p class="r-answer r-correct">Respuesta correcta: <span>${q.options[correctaIdx].text}</span></p>
+        <p class="r-explain">${q.options[correctaIdx].explain}</p>
+      </div>
+    `;
+    reviewContainer.appendChild(div);
+  });
+
+  desactivarMonitoreo();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MONITOREO ANTI-INFRACCIÓN
+// ══════════════════════════════════════════════════════════════════════════
+function registrarInfraccion(tipo) {
+  infracciones++;
+  const ts = new Date().toLocaleTimeString("es-MX");
+  infraccionLog.push(`${ts} — ${tipo}`);
+}
+
+function bloqAccion(e) {
+  e.preventDefault();
+  registrarInfraccion(`intento de ${e.type}`);
+}
+
+function manejVisibilidad() {
+  if (document.hidden) {
+    registrarInfraccion("cambio de pestaña o ventana");
+  }
+}
+
+function activarMonitoreo() {
+  document.addEventListener("copy",        bloqAccion);
+  document.addEventListener("paste",       bloqAccion);
+  document.addEventListener("cut",         bloqAccion);
+  document.addEventListener("contextmenu", bloqAccion);
+  document.addEventListener("visibilitychange", manejVisibilidad);
+}
+
+function desactivarMonitoreo() {
+  document.removeEventListener("copy",        bloqAccion);
+  document.removeEventListener("paste",       bloqAccion);
+  document.removeEventListener("cut",         bloqAccion);
+  document.removeEventListener("contextmenu", bloqAccion);
+  document.removeEventListener("visibilitychange", manejVisibilidad);
+}
+</script>
+
+</body>
+</html>
