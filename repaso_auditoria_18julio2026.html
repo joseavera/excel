@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repaso previo — Auditoría de Fórmulas | IEDEP</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* ── Solo lógica de navegación entre secciones ── */
+
+  .nav-tabs {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+    border-bottom: 2px solid var(--guinda-rule);
+    padding-bottom: .6rem;
+  }
+  .nav-tab {
+    font-family: var(--font-ui);
+    font-size: .82rem;
+    font-weight: 600;
+    padding: .45rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background: var(--surface);
+    color: var(--ink-secondary);
+    cursor: pointer;
+    letter-spacing: .02em;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .nav-tab:hover  { background: var(--guinda-light); color: var(--guinda); }
+  .nav-tab.active {
+    background: var(--guinda);
+    color: var(--white);
+    border-color: var(--guinda);
+  }
+  .nav-tab.done {
+    border-color: #A5D6A7;
+    color: #2E7D32;
+    background: #F1F8E9;
+  }
+  .nav-tab.done::after { content: " ✓"; }
+
+  .seccion { display: none; }
+  .seccion.activa { display: block; }
+
+  .nav-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: .75rem;
+  }
+  .nav-footer button {
+    font-family: var(--font-ui);
+    font-size: .88rem;
+    font-weight: 600;
+    padding: .6rem 1.3rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+  }
+  .btn-prev {
+    background: var(--surface);
+    color: var(--ink-secondary);
+    border: 1px solid var(--border) !important;
+  }
+  .btn-prev:hover { background: var(--guinda-light); }
+  .btn-next {
+    background: var(--guinda);
+    color: var(--white);
+  }
+  .btn-next:hover { background: var(--guinda-dark); }
+  .btn-next:disabled { background: var(--border-strong); cursor: not-allowed; }
+
+  .progress-wrap {
+    font-family: var(--font-ui);
+    font-size: .8rem;
+    color: var(--ink-muted);
+    text-align: center;
+    flex: 1;
+  }
+  .progress-dots {
+    display: flex;
+    gap: .4rem;
+    justify-content: center;
+    margin-top: .35rem;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background .2s;
+  }
+  .dot.done    { background: #A5D6A7; }
+  .dot.active  { background: var(--guinda); }
+
+  /* ── Mini-quiz de autoevaluación ── */
+  .quiz-check {
+    margin: 1.25rem 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .quiz-check-hdr {
+    background: var(--guinda);
+    color: var(--white);
+    padding: .6rem 1.2rem;
+    font-family: var(--font-ui);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .quiz-check-body { padding: 1.1rem 1.3rem; background: var(--off-white); }
+  .quiz-check-q {
+    font-weight: 600;
+    margin-bottom: .75rem;
+    font-size: .97rem;
+  }
+  .quiz-opts { display: flex; flex-direction: column; gap: .45rem; }
+  .quiz-opt {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .5rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    cursor: pointer;
+    font-size: .93rem;
+    line-height: 1.5;
+  }
+  .quiz-opt input { accent-color: var(--guinda); flex-shrink: 0; margin-top: .18rem; }
+  .quiz-opt:hover:not(.locked) { border-color: var(--guinda-rule); background: var(--guinda-light); }
+  .quiz-opt.correct { border-color: #2E7D32; background: #E8F5E9; }
+  .quiz-opt.wrong   { border-color: #C62828; background: #FFEBEE; }
+  .quiz-opt.locked  { cursor: not-allowed; }
+  .quiz-btn {
+    margin-top: .9rem;
+    font-family: var(--font-ui);
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .55rem 1.1rem;
+    background: var(--guinda);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .quiz-btn:disabled { background: var(--border-strong); cursor: not-allowed; }
+  .quiz-feedback {
+    display: none;
+    margin-top: .75rem;
+    padding: .7rem 1rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ui);
+    font-size: .88rem;
+    line-height: 1.6;
+  }
+  .quiz-feedback.ok  { background: #E8F5E9; color: #2E7D32; border-left: 3px solid #2E7D32; }
+  .quiz-feedback.err { background: #FFEBEE; color: #C62828; border-left: 3px solid #C62828; }
+
+  /* ── Mapa visual de errores ── */
+  .error-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: .9rem;
+    margin: 1.25rem 0;
+  }
+  .error-tile {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .error-tile-hdr {
+    padding: .55rem .9rem;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    background: var(--guinda);
+    letter-spacing: .04em;
+  }
+  .error-tile-body {
+    padding: .75rem .9rem;
+    background: var(--off-white);
+    font-size: .9rem;
+    line-height: 1.65;
+  }
+  .error-tile-body strong { color: var(--guinda-dark); }
+
+  /* ── Tabla de herramientas compacta ── */
+  .tool-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-row:last-child { border-bottom: none; }
+  .tool-key {
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: .25rem .6rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 190px;
+    text-align: center;
+  }
+  .tool-desc { font-size: .93rem; line-height: 1.55; }
+  .tool-desc strong { color: var(--guinda); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo-wrap">
+    <img src="imagen1.png" alt="Logo IEDEP">
+  </div>
+  <div class="header-text">
+    <span class="inst-name">Instituto de Educación Digital del Estado de Puebla</span>
+    <span class="doc-title">Excel Avanzado &middot; Licenciatura en Administración de Empresas &middot; 3er Cuatrimestre</span>
+  </div>
+  <div class="logo-wrap" style="margin-left:auto;">
+    <img src="imagen2.png" alt="Logo secundario" style="height:48px;">
+  </div>
+</header>
+
+<section class="class-hero">
+  <span class="class-label">Repaso previo &middot; Unidad 2</span>
+  <h1>Auditoría de Fórmulas</h1>
+  <span class="class-subtitle">Cinco secciones breves para activar lo que aprendiste antes de la evaluación de hoy. Lee cada sección y responde la pregunta de verificación antes de avanzar.</span>
+  <div class="meta-row">
+    <div class="meta-item">Fecha<span>Viernes 18 de julio de 2026</span></div>
+    <div class="meta-item">Tiempo estimado<span>15 a 20 minutos</span></div>
+    <div class="meta-item">Asesor<span>Mtro. José Armando Vera Rodríguez</span></div>
+  </div>
+</section>
+
+<div class="page-wrapper">
+
+  <!-- Pestañas de navegación -->
+  <nav class="nav-tabs" id="nav-tabs">
+    <button class="nav-tab active" onclick="irA(0)">1 &mdash; Por qué importa</button>
+    <button class="nav-tab"        onclick="irA(1)">2 &mdash; Los cinco errores</button>
+    <button class="nav-tab"        onclick="irA(2)">3 &mdash; Herramientas</button>
+    <button class="nav-tab"        onclick="irA(3)">4 &mdash; SIERROR</button>
+    <button class="nav-tab"        onclick="irA(4)">5 &mdash; Flujo completo</button>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- SECCIÓN 1 — POR QUÉ IMPORTA -->
+  <!-- ============================================================ -->
+  <div class="seccion activa" id="sec-0">
+    <span class="section-label">Contexto</span>
+    <h2 class="section-title">Por qué importa la Auditoría de Fórmulas</h2>
+
+    <p>
+      Imagina que eres responsable de la nómina de cincuenta empleados. Abres el archivo
+      el día de pago y varias celdas muestran códigos de error en lugar de números.
+      No sabes cuál de las doscientas fórmulas está fallando ni por qué.
+      Sin las herramientas de auditoría, tendrías que revisar cada celda a mano.
+    </p>
+
+    <div class="callout note">
+      <p>
+        La Auditoría de Fórmulas es el conjunto de herramientas que Excel pone a tu disposición
+        para <strong>diagnosticar errores</strong>, <strong>entender dependencias</strong>
+        y <strong>corregir con precisión</strong>, sin adivinar ni borrar trabajo válido.
+      </p>
+    </div>
+
+    <p>
+      En el ámbito laboral, la capacidad de corregir una hoja rota en minutos
+      —en lugar de horas— distingue a un administrador competente de uno que
+      depende de otros para validar su propio trabajo.
+    </p>
+
+    <div class="concept-box">
+      <span class="concept-title">Lo que cubre esta unidad</span>
+      <p>
+        Cinco errores clásicos de Excel y sus causas &mdash;
+        Mostrar Fórmulas (Ctrl+`) &mdash;
+        Rastrear Precedentes y Dependientes &mdash;
+        Comprobación de Errores &mdash;
+        Función SIERROR &mdash;
+        Flujo completo de diagnóstico y corrección.
+      </p>
+    </div>
+
+    <!-- Mini-quiz 1 -->
+    <div class="quiz-check" id="qc-0">
+      <div class="quiz-check-hdr">Verificación rápida</div>
+      <div class="quiz-check-body">
+        <p class="quiz-check-q">¿Cuál es el objetivo principal de las herramientas de Auditoría de Fórmulas?</p>
+        <div class="quiz-opts" id="qc-0-opts">
+          <label class="quiz-opt"><input type="radio" name="qc0" value="a"> Dar formato visual a las celdas para que la hoja se vea más profesional.</label>
+          <label class="quiz-opt"><input type="radio" name="qc0" value="b"> Diagnosticar errores, entender qué celdas se afectan entre sí y corregir con precisión.</label>
+          <label class="quiz-opt"><input type="radio" name="qc0" value="c"> Proteger el archivo con contraseña para que nadie más pueda editarlo.</label>
+        </div>
+        <button class="quiz-btn" onclick="verificar(0,'b')" id="btn-qc-0">Verificar</button>
+        <div class="quiz-feedback" id="fb-0"></div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-prev" disabled>Anterior</button>
+      <div class="progress-wrap">
+        <span>Sección 1 de 5</span>
+        <div class="progress-dots" id="dots"></div>
+      </div>
+      <button class="btn-next" id="btn-next-0" onclick="irA(1)" disabled>Siguiente &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECCIÓN 2 — LOS CINCO ERRORES -->
+  <!-- ============================================================ -->
+  <div class="seccion" id="sec-1">
+    <span class="section-label">Referencia clave</span>
+    <h2 class="section-title">Los cinco errores que debes reconocer</h2>
+
+    <p>
+      Cada código de error en Excel tiene una causa específica y única.
+      Reconocer el código te dice inmediatamente dónde buscar el problema,
+      sin necesidad de revisar la fórmula completa.
+    </p>
+
+    <div class="error-grid">
+      <div class="error-tile">
+        <div class="error-tile-hdr">#¡DIV/0!</div>
+        <div class="error-tile-body">
+          <strong>Causa:</strong> la fórmula divide entre una celda que vale cero o está vacía.<br>
+          <strong>Ejemplo real:</strong> calcular el porcentaje de cumplimiento cuando la meta todavía no se ha ingresado.
+        </div>
+      </div>
+      <div class="error-tile">
+        <div class="error-tile-hdr">#¡VALOR!</div>
+        <div class="error-tile-body">
+          <strong>Causa:</strong> la operación espera un número y encuentra texto, o viceversa.<br>
+          <strong>Ejemplo real:</strong> sumar la columna de ventas cuando alguien escribió "N/A" en lugar de dejar la celda vacía.
+        </div>
+      </div>
+      <div class="error-tile">
+        <div class="error-tile-hdr">#¿NOMBRE?</div>
+        <div class="error-tile-body">
+          <strong>Causa:</strong> Excel no reconoce el nombre de la función porque tiene un error tipográfico.<br>
+          <strong>Ejemplo real:</strong> escribir =SUMAA() o =BUSCARV con una letra de más.
+        </div>
+      </div>
+      <div class="error-tile">
+        <div class="error-tile-hdr">#N/A</div>
+        <div class="error-tile-body">
+          <strong>Causa:</strong> BUSCARV (u otra función de búsqueda) no encuentra el valor en la tabla.<br>
+          <strong>Ejemplo real:</strong> buscar un código de producto que aún no ha sido dado de alta en el catálogo.
+        </div>
+      </div>
+      <div class="error-tile">
+        <div class="error-tile-hdr">#¡REF!</div>
+        <div class="error-tile-body">
+          <strong>Causa:</strong> una celda referenciada fue eliminada o movida y la referencia quedó rota.<br>
+          <strong>Ejemplo real:</strong> borrar una columna de datos sin actualizar antes las fórmulas que la usan.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>
+        Regla de oro: el código de error te dice <strong>qué tipo de problema hay</strong>,
+        no dónde está exactamente. Para encontrar la celda raíz del problema usas
+        las herramientas de auditoría que veremos en la siguiente sección.
+      </p>
+    </div>
+
+    <!-- Mini-quiz 2 -->
+    <div class="quiz-check" id="qc-1">
+      <div class="quiz-check-hdr">Verificación rápida</div>
+      <div class="quiz-check-body">
+        <p class="quiz-check-q">El sistema de control escolar muestra #N/A en la celda que debería mostrar el nombre del alumno al buscar por número de matrícula. ¿Cuál es la causa más probable?</p>
+        <div class="quiz-opts" id="qc-1-opts">
+          <label class="quiz-opt"><input type="radio" name="qc1" value="a"> La celda tiene formato de texto y no puede mostrar resultados de búsqueda.</label>
+          <label class="quiz-opt"><input type="radio" name="qc1" value="b"> El número de matrícula ingresado no existe en la tabla de alumnos o tiene un formato diferente (texto vs. número).</label>
+          <label class="quiz-opt"><input type="radio" name="qc1" value="c"> Se eliminó una columna de la hoja y la referencia quedó inválida.</label>
+        </div>
+        <button class="quiz-btn" onclick="verificar(1,'b')" id="btn-qc-1">Verificar</button>
+        <div class="quiz-feedback" id="fb-1"></div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-prev" onclick="irA(0)">&larr; Anterior</button>
+      <div class="progress-wrap">
+        <span>Sección 2 de 5</span>
+        <div class="progress-dots"></div>
+      </div>
+      <button class="btn-next" id="btn-next-1" onclick="irA(2)" disabled>Siguiente &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECCIÓN 3 — HERRAMIENTAS -->
+  <!-- ============================================================ -->
+  <div class="seccion" id="sec-2">
+    <span class="section-label">Las herramientas</span>
+    <h2 class="section-title">Qué hace cada herramienta de auditoría</h2>
+
+    <p>
+      Excel agrupa las herramientas de auditoría en la pestaña
+      <strong>Fórmulas → Auditoría de Fórmulas</strong>.
+      Hay una distinción fundamental que debes tener clara antes de la evaluación:
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <span class="card-title">Rastrear Precedentes</span>
+        <p class="text-sm">Responde: <em>¿de dónde viene este resultado?</em> Dibuja flechas azules desde las celdas que alimentan la fórmula activa hacia ella. Úsalo cuando no entiendes por qué una celda muestra un valor incorrecto.</p>
+      </div>
+      <div class="card">
+        <span class="card-title">Rastrear Dependientes</span>
+        <p class="text-sm">Responde: <em>¿a quién afecta si cambio este valor?</em> Dibuja flechas azules desde la celda activa hacia todas las celdas que la usan. Úsalo antes de modificar una celda para evaluar el impacto.</p>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; margin:1.25rem 0;">
+      <div class="tool-row" style="background:var(--guinda); color:var(--white);">
+        <span style="font-family:var(--font-ui);font-size:.8rem;font-weight:600;letter-spacing:.05em;min-width:190px;">ACCESO</span>
+        <span style="font-family:var(--font-ui);font-size:.8rem;font-weight:600;letter-spacing:.05em;">QUÉ HACE</span>
+      </div>
+      <div class="tool-row">
+        <span class="tool-key">Ctrl + `</span>
+        <span class="tool-desc"><strong>Mostrar Fórmulas:</strong> alterna entre ver los resultados calculados y ver el texto de las fórmulas en todas las celdas. Primer paso de cualquier diagnóstico.</span>
+      </div>
+      <div class="tool-row" style="background:var(--surface)">
+        <span class="tool-key">Fórmulas → Comprobar Errores</span>
+        <span class="tool-desc"><strong>Comprobación de Errores:</strong> navega celda por celda a través de cada error del libro. Es el flujo sistemático cuando hay múltiples errores en distintas hojas.</span>
+      </div>
+      <div class="tool-row">
+        <span class="tool-key">Fórmulas → Rastrear Precedentes</span>
+        <span class="tool-desc"><strong>Rastrear Precedentes:</strong> flechas azules de entrada. Muestra qué celdas alimentan la celda activa.</span>
+      </div>
+      <div class="tool-row" style="background:var(--surface)">
+        <span class="tool-key">Fórmulas → Rastrear Dependientes</span>
+        <span class="tool-desc"><strong>Rastrear Dependientes:</strong> flechas azules de salida. Muestra qué celdas dependen del valor de la celda activa.</span>
+      </div>
+      <div class="tool-row">
+        <span class="tool-key">Fórmulas → Quitar Flechas</span>
+        <span class="tool-desc"><strong>Quitar Flechas:</strong> limpia todas las flechas de rastreo de la hoja. Paso final después de terminar el diagnóstico.</span>
+      </div>
+    </div>
+
+    <!-- Mini-quiz 3 -->
+    <div class="quiz-check" id="qc-2">
+      <div class="quiz-check-hdr">Verificación rápida</div>
+      <div class="quiz-check-body">
+        <p class="quiz-check-q">La gerente de finanzas quiere modificar la celda D12 que contiene la tasa de IVA aplicada en todo el libro, pero antes necesita saber cuántas fórmulas se verán afectadas. ¿Qué herramienta debe usar?</p>
+        <div class="quiz-opts" id="qc-2-opts">
+          <label class="quiz-opt"><input type="radio" name="qc2" value="a"> Rastrear Precedentes desde D12, para ver qué celdas la están alimentando.</label>
+          <label class="quiz-opt"><input type="radio" name="qc2" value="b"> Rastrear Dependientes desde D12, para ver qué fórmulas usan su valor y se verán afectadas al cambiarla.</label>
+          <label class="quiz-opt"><input type="radio" name="qc2" value="c"> Ctrl+` para ver el texto de las fórmulas y contarlas manualmente.</label>
+        </div>
+        <button class="quiz-btn" onclick="verificar(2,'b')" id="btn-qc-2">Verificar</button>
+        <div class="quiz-feedback" id="fb-2"></div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-prev" onclick="irA(1)">&larr; Anterior</button>
+      <div class="progress-wrap">
+        <span>Sección 3 de 5</span>
+        <div class="progress-dots"></div>
+      </div>
+      <button class="btn-next" id="btn-next-2" onclick="irA(3)" disabled>Siguiente &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECCIÓN 4 — SIERROR -->
+  <!-- ============================================================ -->
+  <div class="seccion" id="sec-3">
+    <span class="section-label">La función clave</span>
+    <h2 class="section-title">SIERROR — protege tus fórmulas sin ocultarlos</h2>
+
+    <div class="formula-block">
+      <code class="formula">=SIERROR( fórmula , valor_si_error )</code>
+      <p class="formula-note">Si la fórmula interior produce cualquier tipo de error, Excel devuelve el valor_si_error en su lugar. Si la fórmula es correcta, devuelve el resultado normal.</p>
+    </div>
+
+    <p>
+      SIERROR no corrige el error de fondo: sigue siendo tu responsabilidad
+      que la fórmula interior sea correcta. Lo que SIERROR hace es controlar
+      lo que el usuario final ve cuando algo falla.
+    </p>
+
+    <div class="example-block">
+      <div class="example-header">Dos versiones del mismo BUSCARV — ¿cuál usarías en producción?</div>
+      <div class="example-body">
+
+        <div class="example-statement">Escenario: el código de producto puede no existir en el catálogo.</div>
+
+        <ol class="step-list">
+          <li>
+            <span class="step-n">A</span>
+            <span class="step-content">
+              <strong>Sin SIERROR:</strong>
+              <code class="text-mono">=BUSCARV(A2,Catalogo,3,FALSO)</code><br>
+              Cuando el código no existe &rarr; muestra <strong>#N/A</strong>.
+              Cualquier celda que dependa de este resultado también falla en cascada.
+            </span>
+          </li>
+          <li>
+            <span class="step-n">B</span>
+            <span class="step-content">
+              <strong>Con SIERROR:</strong>
+              <code class="text-mono">=SIERROR(BUSCARV(A2,Catalogo,3,FALSO), "Código no registrado")</code><br>
+              Cuando el código no existe &rarr; muestra <strong>"Código no registrado"</strong>.
+              Las celdas dependientes reciben un texto legible y no se rompen.
+            </span>
+          </li>
+        </ol>
+        <div class="result-line">En un entorno de trabajo real, siempre se usa la versión B.</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>
+        Cuando el segundo argumento de SIERROR es una cadena vacía
+        <code class="text-mono">""</code> en lugar de un texto,
+        la celda queda visualmente en blanco pero las fórmulas dependientes
+        reciben un valor neutral que no genera error en cascada.
+        Es útil cuando no quieres que el usuario vea ningún mensaje.
+      </p>
+    </div>
+
+    <!-- Mini-quiz 4 -->
+    <div class="quiz-check" id="qc-3">
+      <div class="quiz-check-hdr">Verificación rápida</div>
+      <div class="quiz-check-body">
+        <p class="quiz-check-q">Una hoja de cálculo tiene la fórmula =SIERROR(B5/C5, 0). C5 contiene el valor 0. ¿Qué mostrará la celda?</p>
+        <div class="quiz-opts" id="qc-3-opts">
+          <label class="quiz-opt"><input type="radio" name="qc3" value="a"> #¡DIV/0!, porque SIERROR no puede evitar una división entre cero.</label>
+          <label class="quiz-opt"><input type="radio" name="qc3" value="b"> 0, porque SIERROR detecta el #¡DIV/0! y devuelve el valor alternativo definido, que en este caso es 0.</label>
+          <label class="quiz-opt"><input type="radio" name="qc3" value="c"> La celda quedará en blanco porque el resultado de la división es indefinido.</label>
+        </div>
+        <button class="quiz-btn" onclick="verificar(3,'b')" id="btn-qc-3">Verificar</button>
+        <div class="quiz-feedback" id="fb-3"></div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-prev" onclick="irA(2)">&larr; Anterior</button>
+      <div class="progress-wrap">
+        <span>Sección 4 de 5</span>
+        <div class="progress-dots"></div>
+      </div>
+      <button class="btn-next" id="btn-next-3" onclick="irA(4)" disabled>Siguiente &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECCIÓN 5 — FLUJO COMPLETO -->
+  <!-- ============================================================ -->
+  <div class="seccion" id="sec-4">
+    <span class="section-label">Para la evaluación de hoy</span>
+    <h2 class="section-title">El flujo completo de diagnóstico</h2>
+
+    <p>
+      Las preguntas de la evaluación plantean escenarios empresariales reales.
+      En cada uno tendrás que elegir la herramienta o el paso correcto.
+      Este es el flujo que une todo lo que revisamos:
+    </p>
+
+    <div class="example-block">
+      <div class="example-header">Flujo de trabajo — de la detección a la corrección</div>
+      <div class="example-body">
+        <ol class="step-list">
+          <li>
+            <span class="step-n">1</span>
+            <span class="step-content">
+              <strong>Detectar.</strong>
+              Presiona <code class="text-mono">Ctrl+`</code> para ver todas las fórmulas y ubicar visualmente las celdas con error.
+              Alternativamente, <strong>Fórmulas → Comprobación de Errores</strong> navega directamente a cada error
+              de forma secuencial — es el método correcto cuando hay múltiples errores en distintas hojas.
+            </span>
+          </li>
+          <li>
+            <span class="step-n">2</span>
+            <span class="step-content">
+              <strong>Entender el origen.</strong>
+              Haz clic en la celda con error y usa <strong>Rastrear Precedentes</strong>.
+              Las flechas azules te muestran exactamente qué celdas alimentan esa fórmula.
+              Identifica cuál de ellas tiene el dato incorrecto.
+            </span>
+          </li>
+          <li>
+            <span class="step-n">3</span>
+            <span class="step-content">
+              <strong>Evaluar el impacto antes de editar.</strong>
+              Si vas a modificar una celda, primero usa <strong>Rastrear Dependientes</strong> para saber
+              cuántas otras celdas del libro dependen de ese valor.
+              Así evitas correcciones que generan nuevos errores en cadena.
+            </span>
+          </li>
+          <li>
+            <span class="step-n">4</span>
+            <span class="step-content">
+              <strong>Corregir.</strong>
+              Edita la fórmula o el dato fuente. Si la fórmula puede recibir valores inexistentes
+              o divisores en cero, protégela con <strong>SIERROR</strong>.
+            </span>
+          </li>
+          <li>
+            <span class="step-n">5</span>
+            <span class="step-content">
+              <strong>Verificar y limpiar.</strong>
+              Confirma que el resultado es el esperado. Luego usa
+              <strong>Quitar Flechas</strong> para limpiar el diagrama de rastreo.
+              Vuelve a ejecutar Comprobación de Errores para asegurarte de que no queda ningún error.
+            </span>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="concept-box">
+      <span class="concept-title">Distinción que más se evalúa</span>
+      <p>
+        <strong>Precedentes</strong> &rarr; origen del dato (flechas <em>hacia</em> la celda activa).<br>
+        <strong>Dependientes</strong> &rarr; impacto del dato (flechas <em>desde</em> la celda activa).<br>
+        Confundir estas dos es el error más común en la evaluación.
+      </p>
+    </div>
+
+    <!-- Mini-quiz 5 -->
+    <div class="quiz-check" id="qc-4">
+      <div class="quiz-check-hdr">Verificación final</div>
+      <div class="quiz-check-body">
+        <p class="quiz-check-q">El analista corrigió el error en la celda principal y ahora quiere confirmar que no quedan más errores en ninguna hoja del libro antes de entregar el archivo. ¿Cuál es el paso correcto?</p>
+        <div class="quiz-opts" id="qc-4-opts">
+          <label class="quiz-opt"><input type="radio" name="qc4" value="a"> Presionar Ctrl+` para revisar visualmente todas las celdas buscando códigos de error.</label>
+          <label class="quiz-opt"><input type="radio" name="qc4" value="b"> Ir a Fórmulas → Comprobación de Errores y ejecutarlo hasta que el sistema indique que no se encontraron más errores en el libro.</label>
+          <label class="quiz-opt"><input type="radio" name="qc4" value="c"> Usar Rastrear Dependientes desde cada celda corregida para confirmar que los errores no se propagaron.</label>
+        </div>
+        <button class="quiz-btn" onclick="verificar(4,'b')" id="btn-qc-4">Verificar</button>
+        <div class="quiz-feedback" id="fb-4"></div>
+      </div>
+    </div>
+
+    <!-- Mensaje de cierre del repaso -->
+    <div class="callout note" id="msg-listo" style="display:none; margin-top:1.5rem;">
+      <p>
+        Completaste las cinco secciones del repaso. Tienes los conceptos necesarios para la evaluación de hoy.
+        Lee cada escenario con calma, identifica la herramienta que resuelve exactamente lo que se pide
+        y recuerda la distinción entre Precedentes y Dependientes.
+        Éxito.
+      </p>
+    </div>
+
+    <div class="nav-footer">
+      <button class="btn-prev" onclick="irA(3)">&larr; Anterior</button>
+      <div class="progress-wrap">
+        <span>Sección 5 de 5</span>
+        <div class="progress-dots"></div>
+      </div>
+      <button class="btn-next" disabled style="background:var(--border-strong);">Repaso completo</button>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <span><strong>IEDEP</strong> &middot; Instituto de Educación Digital del Estado de Puebla &middot; Excel Avanzado &middot; 18 de julio de 2026</span>
+  <img src="imagen3.png" alt="" style="height:28px; opacity:.85;">
+</footer>
+
+<script>
+  const TOTAL    = 5;
+  const aprobadas = new Array(TOTAL).fill(false);
+  let seccionActual = 0;
+
+  // ── Inicializar puntos de progreso en la primera sección ─────────────
+  window.addEventListener("DOMContentLoaded", () => {
+    renderDots(0);
+  });
+
+  // ── Navegación ────────────────────────────────────────────────────────
+  function irA(idx) {
+    // Ocultar todas
+    document.querySelectorAll(".seccion").forEach(s => s.classList.remove("activa"));
+    document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+
+    // Mostrar destino
+    document.getElementById(`sec-${idx}`).classList.add("activa");
+    document.querySelectorAll(".nav-tab")[idx].classList.add("active");
+    seccionActual = idx;
+
+    // Actualizar estado visual de las pestañas
+    document.querySelectorAll(".nav-tab").forEach((t, i) => {
+      t.classList.remove("done");
+      if (i < idx || aprobadas[i]) t.classList.add("done");
+    });
+
+    renderDots(idx);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // ── Puntos de progreso ────────────────────────────────────────────────
+  function renderDots(actual) {
+    document.querySelectorAll(".progress-dots").forEach(wrap => {
+      wrap.innerHTML = "";
+      for (let i = 0; i < TOTAL; i++) {
+        const d = document.createElement("div");
+        d.className = "dot" + (i < actual || aprobadas[i] ? " done" : "") + (i === actual ? " active" : "");
+        wrap.appendChild(d);
+      }
+    });
+  }
+
+  // ── Verificación de mini-quiz ─────────────────────────────────────────
+  function verificar(idx, correcta) {
+    const optsContainer = document.getElementById(`qc-${idx}-opts`);
+    const radios        = optsContainer.querySelectorAll("input[type='radio']");
+    const opts          = optsContainer.querySelectorAll(".quiz-opt");
+    const fb            = document.getElementById(`fb-${idx}`);
+    const btn           = document.getElementById(`btn-qc-${idx}`);
+    const btnNext       = document.getElementById(`btn-next-${idx}`);
+
+    // Leer selección
+    let elegida = null;
+    radios.forEach(r => { if (r.checked) elegida = r.value; });
+    if (!elegida) { alert("Selecciona una opción antes de verificar."); return; }
+
+    // Bloquear
+    radios.forEach(r => r.disabled = true);
+    opts.forEach(l  => l.classList.add("locked"));
+    btn.disabled = true;
+
+    // Colorear
+    opts.forEach(l => {
+      const v = l.querySelector("input").value;
+      if (v === correcta) l.classList.add("correct");
+      else if (v === elegida) l.classList.add("wrong");
+    });
+
+    // Retroalimentación
+    const esCorrecta = elegida === correcta;
+    fb.style.display = "block";
+    fb.className     = `quiz-feedback ${esCorrecta ? "ok" : "err"}`;
+
+    const mensajes = {
+      ok: [
+        "Correcto. La Auditoría de Fórmulas existe para diagnosticar, entender dependencias y corregir con precisión, no para formatear ni proteger.",
+        "Correcto. #N/A en BUSCARV indica que el valor buscado no existe en la tabla, o que hay una diferencia de formato entre el valor buscado y el que está en la tabla.",
+        "Correcto. Rastrear Dependientes responde '¿a quién afecto si cambio este valor?', que es exactamente lo que necesitas antes de modificar una celda compartida.",
+        "Correcto. SIERROR intercepta cualquier tipo de error y devuelve el valor alternativo definido. En este caso, el #¡DIV/0! se convierte en 0.",
+        "Correcto. Comprobación de Errores es el único método que recorre sistemáticamente todos los errores del libro hasta confirmar que no queda ninguno."
+      ],
+      err: [
+        "Incorrecto. La Auditoría de Fórmulas no tiene relación con el formato visual ni con la protección de hojas. Su propósito es diagnosticar y corregir errores en fórmulas.",
+        "Incorrecto. #N/A no indica una referencia rota (#¡REF! es para eso) ni un problema de formato de celda. Siempre apunta a que el valor buscado no se encontró en la tabla.",
+        "Incorrecto. Rastrear Precedentes muestra de dónde viene el valor de la celda activa, no a dónde va. Para ver el impacto de cambiar D12, necesitas Dependientes.",
+        "Incorrecto. SIERROR sí puede manejar un #¡DIV/0!. Fue diseñado para interceptar cualquier tipo de error de Excel y sustituirlo por el valor que definas.",
+        "Incorrecto. Ctrl+` muestra fórmulas pero no navega a los errores. Rastrear Dependientes tampoco confirma que no hay más errores; solo muestra el impacto de una celda."
+      ]
+    };
+
+    fb.textContent = esCorrecta ? mensajes.ok[idx] : mensajes.err[idx];
+
+    // Desbloquear botón siguiente solo si respondió correctamente
+    if (esCorrecta) {
+      aprobadas[idx] = true;
+      if (btnNext) btnNext.disabled = false;
+      document.querySelectorAll(".nav-tab")[idx].classList.add("done");
+      renderDots(seccionActual);
+      if (idx === TOTAL - 1) {
+        document.getElementById("msg-listo").style.display = "block";
+      }
+    }
+  }
+</script>
+
+</body>
+</html>
